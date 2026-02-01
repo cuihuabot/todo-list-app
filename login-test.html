@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Functionality Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #e8f4fd;
+            border: 1px solid #b3d9ff;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .failure {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>登录功能测试页面</h1>
+        
+        <div class="status">
+            <h3>测试步骤</h3>
+            <ol>
+                <li>确保Firebase SDK已正确加载</li>
+                <li>检查认证处理器是否正确初始化</li>
+                <li>验证IndexedDB是否正常工作</li>
+                <li>测试登录/注册功能</li>
+            </ol>
+        </div>
+        
+        <div>
+            <h3>系统检查</h3>
+            <button class="primary" onclick="checkFirebase()">检查Firebase</button>
+            <button class="primary" onclick="checkAuthHandlers()">检查认证处理器</button>
+            <button class="primary" onclick="checkIndexedDB()">检查IndexedDB</button>
+            <button class="secondary" onclick="goToMainApp()">前往主应用</button>
+        </div>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        async function checkFirebase() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+            
+            // 检查Firebase是否已加载
+            if (typeof firebase !== 'undefined') {
+                const result = document.createElement('div');
+                result.className = 'test-result success';
+                result.textContent = '✓ Firebase SDK 已加载';
+                resultsDiv.appendChild(result);
+            } else {
+                const result = document.createElement('div');
+                result.className = 'test-result failure';
+                result.textContent = '✗ Firebase SDK 未加载';
+                resultsDiv.appendChild(result);
+                return;
+            }
+            
+            // 尝试初始化配置
+            try {
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDAh1FFyjt2Y0LpHfCaXgBkTT4kXmdr3q4",
+                    authDomain: "cuihua-todolist.firebaseapp.com",
+                    projectId: "cuihua-todolist",
+                    storageBucket: "cuihua-todolist.firebasestorage.app",
+                    messagingSenderId: "231753597001",
+                    appId: "1:231753597001:web:c033010dea87a1c342bf98",
+                    measurementId: "G-9FLXFERRD1"
+                };
+                
+                let app, auth, db;
+                
+                try {
+                    app = firebase.app();
+                } catch (error) {
+                    app = firebase.initializeApp(firebaseConfig);
+                }
+                
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                const result = document.createElement('div');
+                result.className = 'test-result success';
+                result.textContent = '✓ Firebase 初始化成功';
+                resultsDiv.appendChild(result);
+                
+                // 检查认证状态
+                const result2 = document.createElement('div');
+                result2.className = 'test-result info';
+                result2.textContent = `ℹ️ 当前认证状态: ${auth.currentUser ? '已登录' : '未登录'}`;
+                resultsDiv.appendChild(result2);
+                
+            } catch (error) {
+                const result = document.createElement('div');
+                result.className = 'test-result failure';
+                result.textContent = `✗ Firebase 初始化失败: ${error.message}`;
+                resultsDiv.appendChild(result);
+            }
+        }
+
+        function checkAuthHandlers() {
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (typeof window.setupAuthHandlers === 'function') {
+                const result = document.createElement('div');
+                result.className = 'test-result success';
+                result.textContent = '✓ 认证处理器函数已定义';
+                resultsDiv.appendChild(result);
+            } else {
+                const result = document.createElement('div');
+                result.className = 'test-result failure';
+                result.textContent = '✗ 认证处理器函数未定义';
+                resultsDiv.appendChild(result);
+            }
+        }
+
+        async function checkIndexedDB() {
+            const resultsDiv = document.getElementById('testResults');
+            
+            if (!window.indexedDB) {
+                const result = document.createElement('div');
+                result.className = 'test-result failure';
+                result.textContent = '✗ 浏览器不支持IndexedDB';
+                resultsDiv.appendChild(result);
+                return;
+            }
+            
+            try {
+                const request = indexedDB.open('TestDB', 1);
+                
+                await new Promise((resolve, reject) => {
+                    request.onerror = () => reject(request.error);
+                    request.onsuccess = () => resolve(request.result);
+                    request.onupgradeneeded = (event) => {
+                        const db = event.target.result;
+                        if (!db.objectStoreNames.contains('test')) {
+                            db.createObjectStore('test', { keyPath: 'id' });
+                        }
+                    };
+                });
+                
+                const result = document.createElement('div');
+                result.className = 'test-result success';
+                result.textContent = '✓ IndexedDB 可用';
+                resultsDiv.appendChild(result);
+                
+                // 关闭测试数据库
+                request.result.close();
+                
+                // 检查SessionManager类
+                if (typeof window.SessionManager !== 'undefined') {
+                    const result2 = document.createElement('div');
+                    result2.className = 'test-result success';
+                    result2.textContent = '✓ SessionManager 类已定义';
+                    resultsDiv.appendChild(result2);
+                } else {
+                    const result2 = document.createElement('div');
+                    result2.className = 'test-result failure';
+                    result2.textContent = '✗ SessionManager 类未定义';
+                    resultsDiv.appendChild(result2);
+                }
+                
+            } catch (error) {
+                const result = document.createElement('div');
+                result.className = 'test-result failure';
+                result.textContent = `✗ IndexedDB 测试失败: ${error.message}`;
+                resultsDiv.appendChild(result);
+            }
+        }
+
+        function goToMainApp() {
+            window.location.href = 'index.html';
+        }
+
+        // 页面加载时进行基本检查
+        window.onload = function() {
+            console.log("Login Test Page Loaded");
+        };
+    </script>
+</body>
+</html>
