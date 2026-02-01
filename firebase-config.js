@@ -236,6 +236,37 @@ function logout(todoApp, authSection) {
   if (todoApp) todoApp.style.display = 'none';
 }
 
+// Additional helper functions for profile management
+function updateProfile(displayName) {
+  if (!window.currentUser) {
+    console.warn("updateProfile: currentUser is undefined");
+    return Promise.reject(new Error("用户未登录"));
+  }
+  
+  return window.currentUser.updateProfile({
+    displayName: displayName
+  });
+}
+
+function updatePassword(currentPassword, newPassword) {
+  if (!window.currentUser) {
+    console.warn("updatePassword: currentUser is undefined");
+    return Promise.reject(new Error("用户未登录"));
+  }
+  
+  // 首先需要重新验证用户身份
+  const credential = firebase.auth.EmailAuthProvider.credential(
+    window.currentUser.email,
+    currentPassword
+  );
+  
+  return window.currentUser.reauthenticateWithCredential(credential)
+    .then(() => {
+      // 重新验证成功，现在可以更新密码
+      return window.currentUser.updatePassword(newPassword);
+    });
+}
+
 // Listen for auth state changes
 auth.onAuthStateChanged(user => {
   if (user) {
@@ -263,3 +294,5 @@ window.deleteTodoData = deleteTodoData;
 window.initializeUserTodos = initializeUserTodos;
 window.showApp = showApp;
 window.logout = logout;
+window.updateProfile = updateProfile;
+window.updatePassword = updatePassword;
