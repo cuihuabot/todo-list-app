@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-User Todo List with Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --light: #f7fafc;
+            --dark: #4a5568;
+            --success: #48bb78;
+            --danger: #e53e3e;
+            --warning: #ecc94b;
+            --info: #4299e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--dark);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.8;
+        }
+
+        .user-info {
+            color: white;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .controls {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .input-group button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .input-group button:hover {
+            background: #5a67d8;
+        }
+
+        .filters {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .filters button {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .filters button.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .view-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .view-controls button {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .view-controls button.active {
+            background: var(--info);
+            color: white;
+        }
+
+        .advanced-filters {
+            padding: 0 20px 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .filter-group select {
+            padding: 5px;
+            border: 1px solid #e2e8f0;
+            border-radius: 3px;
+        }
+
+        .todo-list {
+            padding: 0 20px 20px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .todo-item:hover {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .todo-item.completed {
+            opacity: 0.7;
+        }
+
+        .todo-checkbox {
+            margin-right: 15px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        .todo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .todo-title {
+            font-size: 16px;
+            font-weight: bold;
+            flex: 1;
+        }
+
+        .todo-item.completed .todo-title {
+            text-decoration: line-through;
+            color: #718096;
+        }
+
+        .todo-meta {
+            display: flex;
+            gap: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .todo-priority {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .priority-high { background: #fed7d7; color: #c53030; }
+        .priority-medium { background: #fefcbf; color: #8d5e0d; }
+        .priority-low { background: #c6f6d5; color: #2f855a; }
+
+        .todo-category {
+            padding: 2px 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            font-size: 10px;
+        }
+
+        .todo-due {
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        .todo-description {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .todo-item.show-description .todo-description {
+            display: block;
+        }
+
+        .todo-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .todo-actions button {
+            padding: 5px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .edit-btn {
+            background: #ffd700;
+            color: black;
+        }
+
+        .delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+
+        .detail-btn {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .stats {
+            padding: 15px 20px;
+            background: var(--light);
+            border-top: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            font-size: 14px;
+            color: var(--dark);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-weight: bold;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .modal-title {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #718096;
+        }
+
+        .search-bar {
+            padding: 0 20px 10px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .auth-section {
+            display: block;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .auth-form {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .auth-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .auth-toggle {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .filters, .view-controls {
+                justify-content: center;
+            }
+            
+            .advanced-filters {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div id="authSection" class="container auth-section">
+        <h2>📋 Multi-User Todo List</h2>
+        <p>登录或注册以开始使用</p>
+        
+        <div class="auth-form">
+            <div id="loginFormContainer">
+                <h3>登录</h3>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail">邮箱</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">密码</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit" class="btn-primary">登录</button>
+                </form>
+                
+                <div class="auth-toggle">
+                    <p>还没有账户？ <a href="#" onclick="showRegisterForm()">立即注册</a></p>
+                </div>
+            </div>
+            
+            <div id="registerFormContainer" style="display: none;">
+                <h3>注册</h3>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerDisplayName">显示名称</label>
+                        <input type="text" id="registerDisplayName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail">邮箱</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword">密码</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword">确认密码</label>
+                        <input type="password" id="registerConfirmPassword" required>
+                    </div>
+                    <button type="submit" class="btn-primary">注册</button>
+                </form>
+                
+                <div class="auth-toggle">
+                    <p>已有账户？ <a href="#" onclick="showLoginForm()">立即登录</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Todo App Section (Initially Hidden) -->
+    <div id="todoApp" class="container" style="display: none;">
+        <div class="header">
+            <div>
+                <h1>📋 Multi-User Todo List</h1>
+                <p>安全的个人待办事项管理</p>
+            </div>
+            <div class="user-controls">
+                <span class="user-info" id="userInfo">Loading...</span>
+                <button class="logout-btn" onclick="logout()">登出</button>
+            </div>
+        </div>
+        
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="搜索任务...">
+        </div>
+        
+        <div class="controls">
+            <div class="input-group">
+                <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100">
+                <button onclick="showAddModal()">
+                    <i class="fas fa-plus"></i> 添加
+                </button>
+            </div>
+            <div class="filters">
+                <button onclick="filterTodos('all')" id="filterAll" class="active">全部</button>
+                <button onclick="filterTodos('active')" id="filterActive">待办</button>
+                <button onclick="filterTodos('completed')" id="filterCompleted">已完成</button>
+            </div>
+            <div class="view-controls">
+                <button onclick="changeView('list')" id="viewList" class="active">列表</button>
+                <button onclick="changeView('grid')" id="viewGrid">网格</button>
+            </div>
+        </div>
+        
+        <div class="advanced-filters">
+            <div class="filter-group">
+                <label for="priorityFilter">优先级</label>
+                <select id="priorityFilter" onchange="applyFilters()">
+                    <option value="">全部</option>
+                    <option value="high">高</option>
+                    <option value="medium">中</option>
+                    <option value="low">低</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="categoryFilter">分类</label>
+                <select id="categoryFilter" onchange="applyFilters()">
+                    <option value="">全部</option>
+                    <option value="work">工作</option>
+                    <option value="personal">个人</option>
+                    <option value="shopping">购物</option>
+                    <option value="health">健康</option>
+                    <option value="learning">学习</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="dueDateFilter">到期时间</label>
+                <select id="dueDateFilter" onchange="applyFilters()">
+                    <option value="">全部</option>
+                    <option value="overdue">已过期</option>
+                    <option value="today">今天</option>
+                    <option value="week">本周</option>
+                    <option value="month">本月</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="todo-list" id="todoList">
+            <div class="loading" id="loadingIndicator">
+                <i class="fas fa-spinner fa-spin"></i> 加载中...
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-number" id="totalCount">0</div>
+                <div>总计</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="activeCount">0</div>
+                <div>待办</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="completedCount">0</div>
+                <div>完成</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number" id="overdueCount">0</div>
+                <div>逾期</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="todoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">添加任务</div>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="todoForm">
+                <div class="form-group">
+                    <label for="modalTitleInput">标题 *</label>
+                    <input type="text" id="modalTitleInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="modalDescription">描述</label>
+                    <textarea id="modalDescription"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="modalPriority">优先级</label>
+                    <select id="modalPriority">
+                        <option value="low">低</option>
+                        <option value="medium" selected>中</option>
+                        <option value="high">高</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modalCategory">分类</label>
+                    <select id="modalCategory">
+                        <option value="personal">个人</option>
+                        <option value="work">工作</option>
+                        <option value="shopping">购物</option>
+                        <option value="health">健康</option>
+                        <option value="learning">学习</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="modalDueDate">到期时间</label>
+                    <input type="date" id="modalDueDate">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        // State management
+        let todos = [];
+        let currentFilter = 'all';
+        let currentView = 'list';
+        let editingId = null;
+        let currentUser = null;
+        let filters = {
+            priority: '',
+            category: '',
+            dueDate: '',
+            search: ''
+        };
+
+        // DOM Elements
+        const authSection = document.getElementById('authSection');
+        const todoApp = document.getElementById('todoApp');
+        const userInfo = document.getElementById('userInfo');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const loginFormContainer = document.getElementById('loginFormContainer');
+        const registerFormContainer = document.getElementById('registerFormContainer');
+        const todoList = document.getElementById('todoList');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+
+        // Form handlers
+        if (loginForm) {
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                
+                try {
+                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    currentUser = userCredential.user;
+                    await loadUserTodos();
+                    showApp();
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        }
+
+        if (registerForm) {
+            registerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const displayName = document.getElementById('registerDisplayName').value;
+                const email = document.getElementById('registerEmail').value;
+                const password = document.getElementById('registerPassword').value;
+                const confirmPassword = document.getElementById('registerConfirmPassword').value;
+                
+                if (password !== confirmPassword) {
+                    alert('密码和确认密码不匹配');
+                    return;
+                }
+                
+                try {
+                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    await userCredential.user.updateProfile({ displayName });
+                    currentUser = userCredential.user;
+                    await initializeUserTodos();
+                    showApp();
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+        }
+
+        // Show registration form
+        function showRegisterForm() {
+            loginFormContainer.style.display = 'none';
+            registerFormContainer.style.display = 'block';
+        }
+
+        // Show login form
+        function showLoginForm() {
+            registerFormContainer.style.display = 'none';
+            loginFormContainer.style.display = 'block';
+        }
+
+        // Initialize user todos collection
+        async function initializeUserTodos() {
+            // Create a default document for the user if it doesn't exist
+            const userRef = db.collection('users').doc(currentUser.uid);
+            await userRef.set({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                displayName: currentUser.displayName || currentUser.email,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        }
+
+        // Load user's todos from Firestore
+        async function loadUserTodos() {
+            if (!currentUser) return;
+            
+            try {
+                const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+                const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
+                
+                todos = [];
+                snapshot.forEach(doc => {
+                    todos.push({ id: doc.id, ...doc.data() });
+                });
+                
+                renderTodos();
+                updateStats();
+                
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading todos:', error);
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+                }
+            }
+        }
+
+        // Add a new todo
+        async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
+            if (!currentUser || !text.trim()) return;
+            
+            const newTodo = {
+                text: text.trim(),
+                description,
+                completed: false,
+                priority,
+                category,
+                dueDate,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                completedAt: null
+            };
+            
+            try {
+                const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+                await todosRef.add(newTodo);
+                await loadUserTodos(); // Reload to get updated list with proper timestamps
+            } catch (error) {
+                console.error('Error adding todo:', error);
+                alert('添加任务失败，请重试');
+            }
+        }
+
+        // Update a todo
+        async function updateTodo(id, updates) {
+            if (!currentUser || !id) return;
+            
+            try {
+                const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+                await todoRef.update(updates);
+                await loadUserTodos();
+            } catch (error) {
+                console.error('Error updating todo:', error);
+                alert('更新任务失败，请重试');
+            }
+        }
+
+        // Delete a todo
+        async function deleteTodo(id) {
+            if (!currentUser || !id) return;
+            
+            if (!confirm('确定要删除这个任务吗？')) return;
+            
+            try {
+                const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+                await todoRef.delete();
+                await loadUserTodos();
+            } catch (error) {
+                console.error('Error deleting todo:', error);
+                alert('删除任务失败，请重试');
+            }
+        }
+
+        // Toggle todo completion
+        async function toggleTodo(id) {
+            const todo = todos.find(t => t.id === id);
+            if (!todo) return;
+            
+            try {
+                await updateTodo(id, { 
+                    completed: !todo.completed,
+                    completedAt: !todo.completed ? firebase.firestore.FieldValue.serverTimestamp() : null
+                });
+            } catch (error) {
+                console.error('Error toggling todo:', error);
+                alert('更新任务状态失败，请重试');
+            }
+        }
+
+        // Render todos based on current filters
+        function renderTodos() {
+            if (!todoList) return;
+            
+            let filteredTodos = [...todos];
+            
+            // Apply filters
+            filteredTodos = filteredTodos.filter(todo => {
+                // Basic filter
+                if (currentFilter === 'active') return !todo.completed;
+                if (currentFilter === 'completed') return todo.completed;
+                return true;
+            });
+            
+            // Priority filter
+            if (filters.priority) {
+                filteredTodos = filteredTodos.filter(todo => todo.priority === filters.priority);
+            }
+            
+            // Category filter
+            if (filters.category) {
+                filteredTodos = filteredTodos.filter(todo => todo.category === filters.category);
+            }
+            
+            // Due date filter
+            if (filters.dueDate) {
+                filteredTodos = filteredTodos.filter(todo => {
+                    if (!todo.dueDate) return false;
+                    
+                    const due = new Date(todo.dueDate);
+                    const now = new Date();
+                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                    
+                    switch(filters.dueDate) {
+                        case 'overdue':
+                            return due < today && !todo.completed;
+                        case 'today':
+                            return due.toDateString() === today.toDateString();
+                        case 'week':
+                            const weekFromNow = new Date(today);
+                            weekFromNow.setDate(today.getDate() + 7);
+                            return due >= today && due <= weekFromNow;
+                        case 'month':
+                            const monthFromNow = new Date(today);
+                            monthFromNow.setMonth(today.getMonth() + 1);
+                            return due >= today && due <= monthFromNow;
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            // Search filter
+            if (filters.search) {
+                const searchTerm = filters.search.toLowerCase();
+                filteredTodos = filteredTodos.filter(todo => 
+                    todo.text.toLowerCase().includes(searchTerm) ||
+                    (todo.description && todo.description.toLowerCase().includes(searchTerm)) ||
+                    (todo.category && todo.category.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            // Render todos
+            if (filteredTodos.length === 0) {
+                todoList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
+                        <p>🎉 ${currentFilter === 'all' ? '暂无待办事项' : 
+                              currentFilter === 'active' ? '暂无待办事项' : 
+                              '暂无已完成事项'}</p>
+                        <p>${currentFilter === 'all' ? '添加一些任务开始吧！' : ''}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            todoList.innerHTML = filteredTodos.map(todo => {
+                const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
+                const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
+                const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
+                
+                return `
+                    <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
+                        <input type="checkbox" class="todo-checkbox" 
+                               ${todo.completed ? 'checked' : ''} 
+                               onchange="toggleTodo('${todo.id}')">
+                        <div class="todo-content">
+                            <div class="todo-header">
+                                <div class="todo-title">${todo.text}</div>
+                                <div class="todo-meta">
+                                    <span class="todo-priority priority-${todo.priority}">${todo.priority}</span>
+                                    <span class="todo-category">${todo.category}</span>
+                                    ${todo.dueDate ? `<span class="todo-due"><i class="far fa-calendar"></i> ${dueDateStr}</span>` : ''}
+                                </div>
+                            </div>
+                            ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                        </div>
+                        <div class="todo-actions">
+                            <button class="detail-btn" onclick="toggleDescription('${todo.id}')">
+                                <i class="fas fa-info-circle"></i>
+                            </button>
+                            <button class="edit-btn" onclick="showAddModal(${JSON.stringify(todo)})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="delete-btn" onclick="deleteTodo('${todo.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Format date
+        function formatDate(date) {
+            if (date instanceof Date) {
+                return date.toLocaleDateString('zh-CN');
+            }
+            return new Date(date).toLocaleDateString('zh-CN');
+        }
+
+        // Toggle description visibility
+        function toggleDescription(id) {
+            const element = document.querySelector(`[data-id="${id}"]`);
+            element.classList.toggle('show-description');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const totalCount = todos.length;
+            const completedCount = todos.filter(todo => todo.completed).length;
+            const activeCount = totalCount - completedCount;
+            const overdueCount = todos.filter(todo => {
+                return todo.dueDate && 
+                       new Date(todo.dueDate) < new Date() && 
+                       !todo.completed;
+            }).length;
+            
+            document.getElementById('totalCount').textContent = totalCount;
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('overdueCount').textContent = overdueCount;
+        }
+
+        // Filter todos
+        function filterTodos(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filters button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
+            
+            renderTodos();
+        }
+
+        // Change view
+        function changeView(view) {
+            currentView = view;
+            
+            document.querySelectorAll('.view-controls button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`view${view.charAt(0).toUpperCase() + view.slice(1)}`).classList.add('active');
+            
+            renderTodos();
+        }
+
+        // Apply filters
+        function applyFilters() {
+            filters.priority = document.getElementById('priorityFilter').value;
+            filters.category = document.getElementById('categoryFilter').value;
+            filters.dueDate = document.getElementById('dueDateFilter').value;
+            
+            renderTodos();
+        }
+
+        // Handle search
+        function handleSearch() {
+            filters.search = document.getElementById('searchInput').value.trim();
+            renderTodos();
+        }
+
+        // Show add/edit modal
+        function showAddModal(todo = null) {
+            editingId = todo ? todo.id : null;
+            
+            if (todo) {
+                document.getElementById('modalTitle').textContent = '编辑任务';
+                document.getElementById('modalTitleInput').value = todo.text || '';
+                document.getElementById('modalDescription').value = todo.description || '';
+                document.getElementById('modalPriority').value = todo.priority || 'medium';
+                document.getElementById('modalCategory').value = todo.category || 'personal';
+                document.getElementById('modalDueDate').value = todo.dueDate || '';
+            } else {
+                document.getElementById('modalTitle').textContent = '添加任务';
+                document.getElementById('modalTitleInput').value = '';
+                document.getElementById('modalDescription').value = '';
+                document.getElementById('modalPriority').value = 'medium';
+                document.getElementById('modalCategory').value = 'personal';
+                document.getElementById('modalDueDate').value = '';
+            }
+            
+            document.getElementById('todoModal').style.display = 'block';
+            document.getElementById('modalTitleInput').focus();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('todoModal').style.display = 'none';
+            editingId = null;
+        }
+
+        // Handle form submission for add/edit
+        document.getElementById('todoForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const title = document.getElementById('modalTitleInput').value.trim();
+            const description = document.getElementById('modalDescription').value.trim();
+            const priority = document.getElementById('modalPriority').value;
+            const category = document.getElementById('modalCategory').value;
+            const dueDate = document.getElementById('modalDueDate').value;
+            
+            if (!title) return;
+            
+            if (editingId) {
+                // Update existing todo
+                await updateTodo(editingId, {
+                    text: title,
+                    description,
+                    priority,
+                    category,
+                    dueDate
+                });
+            } else {
+                // Add new todo
+                await addTodo(title, description, priority, category, dueDate);
+            }
+            
+            closeModal();
+        });
+
+        // Handle search input
+        document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+        // Handle Enter key in main input
+        document.getElementById('todoInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const text = document.getElementById('todoInput').value.trim();
+                if (text) {
+                    addTodo(text);
+                    document.getElementById('todoInput').value = '';
+                }
+            }
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('todoModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+
+        // Show the app after login
+        function showApp() {
+            if (authSection) authSection.style.display = 'none';
+            if (todoApp) todoApp.style.display = 'block';
+            if (userInfo) userInfo.textContent = `欢迎, ${currentUser.displayName || currentUser.email}`;
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await auth.signOut();
+                currentUser = null;
+                todos = [];
+                
+                if (authSection) authSection.style.display = 'block';
+                if (todoApp) todoApp.style.display = 'none';
+                
+                // Reset forms
+                if (loginForm) loginForm.reset();
+                if (registerForm) registerForm.reset();
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
+        }
+
+        // Listen for auth state changes
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                showApp();
+                loadUserTodos();
+            } else {
+                if (authSection) authSection.style.display = 'block';
+                if (todoApp) todoApp.style.display = 'none';
+            }
+        });
+
+        // Initialize search event listener
+        document.getElementById('searchInput').addEventListener('input', () => {
+            filters.search = document.getElementById('searchInput').value.trim();
+            renderTodos();
+        });
+
+        // Expose functions to global scope for inline handlers
+        window.showRegisterForm = showRegisterForm;
+        window.showLoginForm = showLoginForm;
+        window.toggleTodo = toggleTodo;
+        window.deleteTodo = deleteTodo;
+        window.toggleDescription = toggleDescription;
+        window.filterTodos = filterTodos;
+        window.changeView = changeView;
+        window.applyFilters = applyFilters;
+        window.handleSearch = handleSearch;
+        window.showAddModal = showAddModal;
+        window.closeModal = closeModal;
+        window.logout = logout;
+    </script>
+</body>
+</html>
