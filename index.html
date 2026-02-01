@@ -1143,41 +1143,20 @@
             window.renderTodos(window.todos, window.todoList);
         });
 
-        // 确保这些函数在全局范围内可用
-        function showRegisterForm() {
+        // Expose functions to global scope for inline handlers
+        // 仅覆盖需要特殊处理的函数
+        window.showRegisterForm = function() {
             document.getElementById('loginFormContainer').style.display = 'none';
             document.getElementById('registerFormContainer').style.display = 'block';
-        }
-
-        function showLoginForm() {
+        };
+        
+        window.showLoginForm = function() {
             document.getElementById('registerFormContainer').style.display = 'none';
             document.getElementById('loginFormContainer').style.display = 'block';
-        }
-
-        // Expose functions to global scope for inline handlers
-        window.showRegisterForm = showRegisterForm;
-        window.showLoginForm = showLoginForm;
-        window.toggleTodo = function(id) {
-            const todo = window.todos.find(t => t.id === id);
-            if (todo) {
-                window.toggleComplete(id, !todo.completed, window.todoList);
-            }
         };
-        window.deleteTodo = function(id) {
-            if (confirm('确定要删除这个任务吗？')) {
-                window.deleteTodo(id);  // 修复：调用原始函数而不是递归调用
-            }
-        };
-        window.toggleDescription = toggleDescription;
-        window.filterTodos = filterTodos;
-        window.changeView = changeView;
-        window.applyFilters = applyFilters;
-        window.handleSearch = handleSearch;
-        window.showAddModal = showAddModal;
-        window.closeModal = closeModal;
-        window.logout = function() {
-            logout(window.todoApp, window.authSection);
-        };
+        
+        // 从firebase-config.js导入的函数已经正确处理参数，无需重新定义
+        // 保持原有的函数引用
     </script>
 </body>
 </html>
