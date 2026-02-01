@@ -1936,6 +1936,9 @@
 
         // Initialize search event listener - removed as search functionality is disabled
 
+        // Global variable to hold session manager
+        let sessionManager;
+
         // Check for stored authentication state on page load
         async function checkStoredAuthState() {
             // With IndexedDB implementation, we rely primarily on Firebase's built-in persistence
@@ -1945,7 +1948,12 @@
                 window.onUserLoggedIn();
             } else {
                 // Check if we have stored session data in IndexedDB
-                // This is handled in the firebase-config.js file
+                // Initialize session manager if not already done
+                if (typeof SessionManager !== 'undefined' && !sessionManager) {
+                    sessionManager = new SessionManager();
+                }
+                
+                // Wait for Firebase to restore session if available
                 console.log("Waiting for Firebase to restore session...");
             }
         }
@@ -1969,8 +1977,8 @@
                 };
                 
                 // Initialize session manager if not already done
-                if (typeof SessionManager !== 'undefined' && !sessionManager) {
-                    sessionManager = new SessionManager();
+                if (typeof window.SessionManager !== 'undefined' && !sessionManager) {
+                    sessionManager = new window.SessionManager();
                 }
                 
                 // Store the session
