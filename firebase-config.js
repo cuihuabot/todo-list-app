@@ -271,7 +271,7 @@ function updatePassword(currentPassword, newPassword) {
 class SessionManager {
   constructor() {
     this.dbName = 'TodoAppSessionDB';
-    this.version = 1;
+    this.version = 2; // 增加版本号以更新数据库结构
     this.db = null;
   }
 
@@ -289,11 +289,21 @@ class SessionManager {
       
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
-        if (!db.objectStoreNames.contains('sessions')) {
-          const objectStore = db.createObjectStore('sessions', { keyPath: 'uid' });
-          objectStore.createIndex('expires', 'expires', { unique: false });
-          console.log("Created sessions object store");
+        // 如果旧版本存在，删除它
+        if (db.objectStoreNames.contains('sessions')) {
+          db.deleteObjectStore('sessions');
         }
+        // 创建新版本的对象存储
+        const objectStore = db.createObjectStore('sessions', { keyPath: 'uid' });
+        objectStore.createIndex('expires', 'expires', { unique: false });
+        
+        // 创建页面状态存储
+        if (!db.objectStoreNames.contains('pageStates')) {
+          const pageStateStore = db.createObjectStore('pageStates', { keyPath: 'uid' });
+          pageStateStore.createIndex('updatedAt', 'updatedAt', { unique: false });
+        }
+        
+        console.log("Created sessions and pageStates object stores");
       };
     });
   }
@@ -347,12 +357,74 @@ class SessionManager {
     });
   }
 
+  // 存储页面状态
+  async storePageState(userId, currentPage = 'todo') {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['pageStates'], 'readwrite');
+    const store = transaction.objectStore('pageStates');
+    
+    const pageStateData = {
+      uid: userId,
+      currentPage: currentPage,
+      updatedAt: Date.now()
+    };
+    
+    return new Promise((resolve, reject) => {
+      const request = store.put(pageStateData);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // 获取页面状态
+  async getPageState(userId) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['pageStates'], 'readonly');
+    const store = transaction.objectStore('pageStates');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.get(userId);
+      request.onsuccess = () => {
+        const pageState = request.result;
+        // 检查是否过期（页面状态只保留最近24小时）
+        if (pageState && pageState.updatedAt > (Date.now() - 24 * 60 * 60 * 1000)) {
+          console.log("Valid page state found in IndexedDB:", pageState.currentPage);
+          resolve(pageState);
+        } else {
+          // 删除过期的页面状态
+          if (pageState) {
+            console.log("Page state expired, removing from IndexedDB");
+            this.clearPageState(userId);
+          }
+          resolve(null);
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // 清除会话
   async clearSession(uid) {
     if (!this.db) await this.init();
     
     const transaction = this.db.transaction(['sessions'], 'readwrite');
     const store = transaction.objectStore('sessions');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.delete(uid);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // 清除页面状态
+  async clearPageState(uid) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['pageStates'], 'readwrite');
+    const store = transaction.objectStore('pageStates');
     
     return new Promise((resolve, reject) => {
       const request = store.delete(uid);

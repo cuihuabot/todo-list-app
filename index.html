@@ -1950,6 +1950,9 @@
             }
         }
 
+        // Global variable to hold session manager
+        let sessionManager;
+
         // Callbacks for data layer to notify UI layer
         window.onUserLoggedIn = async function() {
             await loadUserTodos();
@@ -1957,6 +1960,46 @@
                 window.authSection.style.display = 'none';
                 window.todoApp.style.display = 'block';
                 window.userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
+                
+                // Store user info in IndexedDB for persistence
+                const userObj = {
+                    uid: window.currentUser.uid,
+                    email: window.currentUser.email,
+                    displayName: window.currentUser.displayName
+                };
+                
+                // Initialize session manager if not already done
+                if (typeof SessionManager !== 'undefined' && !sessionManager) {
+                    sessionManager = new SessionManager();
+                }
+                
+                // Store the session
+                if (sessionManager) {
+                    try {
+                        await sessionManager.storeSession(userObj);
+                        console.log("Session stored in IndexedDB successfully");
+                    } catch (error) {
+                        console.error("Error storing session in IndexedDB:", error);
+                    }
+                }
+                
+                // Restore the last visited page
+                if (sessionManager) {
+                    try {
+                        const pageState = await sessionManager.getPageState(window.currentUser.uid);
+                        if (pageState && pageState.currentPage) {
+                            switchTab(pageState.currentPage);
+                        } else {
+                            // Default to todo tab if no previous state
+                            switchTab('todo');
+                        }
+                    } catch (error) {
+                        console.error("Error getting page state:", error);
+                        switchTab('todo'); // Default fallback
+                    }
+                } else {
+                    switchTab('todo'); // Default fallback
+                }
             }
         };
 
@@ -1969,6 +2012,14 @@
             }
             if (window.loginForm) window.loginForm.reset();
             if (window.registerForm) window.registerForm.reset();
+            
+            // Clear session from IndexedDB
+            if (sessionManager && window.currentUser) {
+                sessionManager.clearSession(window.currentUser.uid)
+                    .catch(error => console.error("Error clearing session:", error));
+                sessionManager.clearPageState(window.currentUser.uid)
+                    .catch(error => console.error("Error clearing page state:", error));
+            }
         };
 
         window.onTodosChanged = async function() {
@@ -2202,17 +2253,37 @@
         }
 
         // Initialize theme on load
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             initializeTheme();
-            // Initialize default tab
-            switchTab('todo');
+            
+            // Initialize session manager
+            if (typeof SessionManager !== 'undefined') {
+                sessionManager = new SessionManager();
+            }
             
             // Check stored auth state after page loads
-            checkStoredAuthState();
+            await checkStoredAuthState();
+            
+            // Initialize default tab or restore from stored state
+            if (window.currentUser && sessionManager) {
+                try {
+                    const pageState = await sessionManager.getPageState(window.currentUser.uid);
+                    if (pageState && pageState.currentPage) {
+                        switchTab(pageState.currentPage);
+                    } else {
+                        switchTab('todo'); // Default
+                    }
+                } catch (error) {
+                    console.error("Error restoring page state:", error);
+                    switchTab('todo'); // Default fallback
+                }
+            } else {
+                switchTab('todo'); // Default fallback
+            }
         });
 
         // Tab switching functionality
-        function switchTab(tabName) {
+        async function switchTab(tabName) {
             // Hide all tabs
             document.querySelectorAll('.tab-pane').forEach(tab => {
                 tab.classList.remove('active');
@@ -2243,6 +2314,16 @@
             // If switching to profile tab, update profile info
             if (tabName === 'profile' && window.currentUser) {
                 updateProfileInfo();
+            }
+            
+            // Store the current page state in IndexedDB
+            if (window.currentUser && sessionManager) {
+                try {
+                    await sessionManager.storePageState(window.currentUser.uid, tabName);
+                    console.log("Current page state stored:", tabName);
+                } catch (error) {
+                    console.error("Error storing page state:", error);
+                }
             }
         }
 
