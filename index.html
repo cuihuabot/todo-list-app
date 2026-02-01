@@ -744,6 +744,11 @@
                     return;
                 }
                 
+                if (password.length < 6) {
+                    alert('密码长度至少为6位');
+                    return;
+                }
+                
                 try {
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
                     await userCredential.user.updateProfile({ displayName });
