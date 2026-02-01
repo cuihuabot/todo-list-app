@@ -1225,16 +1225,7 @@
                     </div>
                 </div>
                 
-                <div class="search-bar">
-                    <input type="text" id="todoSearchInput" placeholder="搜索任务...">
-                </div>
-
                 <div class="controls">
-                    <div class="filters">
-                        <button type="button" onclick="window.filterTodos('all')" id="todoFilterAll" class="active">全部</button>
-                        <button type="button" onclick="window.filterTodos('active')" id="todoFilterActive">待办</button>
-                        <button type="button" onclick="window.filterTodos('completed')" id="todoFilterCompleted">已完成</button>
-                    </div>
                     <div class="view-controls">
                         <button type="button" onclick="window.changeView('list')" id="todoViewList" class="active">列表</button>
                         <button type="button" onclick="window.changeView('timeline')" id="todoViewTimeline">时间轴</button>
@@ -1694,53 +1685,8 @@
                 return true;
             });
 
-            // Priority filter
-            if (window.filters.priority) {
-                filteredTodos = filteredTodos.filter(todo => todo.priority === window.filters.priority);
-            }
-
-            // Category filter
-            if (window.filters.category) {
-                filteredTodos = filteredTodos.filter(todo => todo.category === window.filters.category);
-            }
-
-            // Due date filter
-            if (window.filters.dueDate) {
-                filteredTodos = filteredTodos.filter(todo => {
-                    if (!todo.dueDate) return false;
-
-                    const due = new Date(todo.dueDate);
-                    const now = new Date();
-                    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-                    switch(window.filters.dueDate) {
-                        case 'overdue':
-                            return due < today && !todo.completed;
-                        case 'today':
-                            return due.toDateString() === today.toDateString();
-                        case 'week':
-                            const weekFromNow = new Date(today);
-                            weekFromNow.setDate(today.getDate() + 7);
-                            return due >= today && due <= weekFromNow;
-                        case 'month':
-                            const monthFromNow = new Date(today);
-                            monthFromNow.setMonth(today.getMonth() + 1);
-                            return due >= today && due <= monthFromNow;
-                        default:
-                            return true;
-                    }
-                });
-            }
-
-            // Search filter
-            if (window.filters.search) {
-                const searchTerm = window.filters.search.toLowerCase();
-                filteredTodos = filteredTodos.filter(todo =>
-                    todo.text.toLowerCase().includes(searchTerm) ||
-                    (todo.description && todo.description.toLowerCase().includes(searchTerm)) ||
-                    (todo.category && todo.category.toLowerCase().includes(searchTerm))
-                );
-            }
+            // Note: Advanced filters (priority, category, due date, search) have been removed
+            // Only basic filtering (active/completed) remains
 
             // Render todos based on current view
             if (filteredTodos.length === 0) {
@@ -1880,15 +1826,9 @@
             if (overdueEl) overdueEl.textContent = overdueCount;
         }
 
-        // Filter todos
+        // Filter todos - simplified as filter buttons are removed
         function filterTodos(filter) {
             window.currentFilter = filter;
-
-            document.querySelectorAll('.filters button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
-
             renderTodos();
         }
 
@@ -1923,10 +1863,9 @@
             renderTodos();
         }
 
-        // Handle search
+        // Handle search - removed as search functionality is disabled
         function handleSearch() {
-            window.filters.search = document.getElementById('todoSearchInput').value.trim();
-            renderTodos();
+            // Search functionality has been removed
         }
 
         // Show add/edit modal
@@ -1988,8 +1927,7 @@
             closeModal();
         });
 
-        // Handle search input
-        document.getElementById('todoSearchInput').addEventListener('input', handleSearch);
+        // Handle search input - removed as search functionality is disabled
 
         // Handle quick add - removed as this is part of old UI that was deleted
         function handleQuickAdd(e) {
@@ -2076,11 +2014,7 @@
             showLogoutConfirmation();
         }
 
-        // Initialize search event listener
-        document.getElementById('todoSearchInput').addEventListener('input', () => {
-            window.filters.search = document.getElementById('todoSearchInput').value.trim();
-            renderTodos();
-        });
+        // Initialize search event listener - removed as search functionality is disabled
 
         // Callbacks for data layer to notify UI layer
         window.onUserLoggedIn = async function() {
