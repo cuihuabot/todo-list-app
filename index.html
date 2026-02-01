@@ -509,7 +509,7 @@
                 </form>
 
                 <div class="auth-toggle">
-                    <p>还没有账户？ <a href="#" onclick="showRegisterForm()">立即注册</a></p>
+                    <p>还没有账户？ <a href="#" onclick="window.showRegisterForm()">立即注册</a></p>
                 </div>
             </div>
 
@@ -536,7 +536,7 @@
                 </form>
 
                 <div class="auth-toggle">
-                    <p>已有账户？ <a href="#" onclick="showLoginForm()">立即登录</a></p>
+                    <p>已有账户？ <a href="#" onclick="window.showLoginForm()">立即登录</a></p>
                 </div>
             </div>
         </div>
@@ -551,7 +551,7 @@
             </div>
             <div class="user-controls">
                 <span class="user-info" id="userInfo">Loading...</span>
-                <button class="logout-btn" onclick="logout()">登出</button>
+                <button class="logout-btn" onclick="window.logout()">登出</button>
             </div>
         </div>
 
@@ -562,18 +562,18 @@
         <div class="controls">
             <div class="input-group">
                 <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100">
-                <button onclick="showAddModal()">
+                <button onclick="window.showAddModal()">
                     <i class="fas fa-plus"></i> 添加
                 </button>
             </div>
             <div class="filters">
-                <button onclick="filterTodos('all')" id="filterAll" class="active">全部</button>
-                <button onclick="filterTodos('active')" id="filterActive">待办</button>
-                <button onclick="filterTodos('completed')" id="filterCompleted">已完成</button>
+                <button onclick="window.filterTodos('all')" id="filterAll" class="active">全部</button>
+                <button onclick="window.filterTodos('active')" id="filterActive">待办</button>
+                <button onclick="window.filterTodos('completed')" id="filterCompleted">已完成</button>
             </div>
             <div class="view-controls">
-                <button onclick="changeView('list')" id="viewList" class="active">列表</button>
-                <button onclick="changeView('grid')" id="viewGrid">网格</button>
+                <button onclick="window.changeView('list')" id="viewList" class="active">列表</button>
+                <button onclick="window.changeView('grid')" id="viewGrid">网格</button>
             </div>
         </div>
 
@@ -641,7 +641,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title" id="modalTitle">添加任务</div>
-                <span class="close" onclick="closeModal()">&times;</span>
+                <span class="close" onclick="window.closeModal()">&times;</span>
             </div>
             <form id="todoForm">
                 <div class="form-group">
@@ -675,7 +675,7 @@
                     <input type="date" id="modalDueDate">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="button" class="btn-secondary" onclick="window.closeModal()">取消</button>
                     <button type="submit" class="btn-primary">保存</button>
                 </div>
             </form>
@@ -915,10 +915,10 @@
                             ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
                         </div>
                         <div class="todo-actions">
-                            <button class="detail-btn" onclick="toggleDescription('${todo.id}')">
+                            <button class="detail-btn" onclick="window.toggleDescription('${todo.id}')">
                                 <i class="fas fa-info-circle"></i>
                             </button>
-                            <button class="edit-btn" onclick="showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
+                            <button class="edit-btn" onclick="window.showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
                                 <i class="fas fa-edit"></i>
                             </button>
                             <button class="delete-btn" onclick="window.deleteTodo('${todo.id}')">
