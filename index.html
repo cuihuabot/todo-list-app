@@ -2253,33 +2253,11 @@
         }
 
         // Initialize theme on load
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
             
-            // Initialize session manager
-            if (typeof SessionManager !== 'undefined') {
-                sessionManager = new SessionManager();
-            }
-            
-            // Check stored auth state after page loads
-            await checkStoredAuthState();
-            
-            // Initialize default tab or restore from stored state
-            if (window.currentUser && sessionManager) {
-                try {
-                    const pageState = await sessionManager.getPageState(window.currentUser.uid);
-                    if (pageState && pageState.currentPage) {
-                        switchTab(pageState.currentPage);
-                    } else {
-                        switchTab('todo'); // Default
-                    }
-                } catch (error) {
-                    console.error("Error restoring page state:", error);
-                    switchTab('todo'); // Default fallback
-                }
-            } else {
-                switchTab('todo'); // Default fallback
-            }
+            // Initialize default tab
+            switchTab('todo');
         });
 
         // Tab switching functionality

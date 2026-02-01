@@ -460,45 +460,22 @@ class SessionManager {
 // 初始化会话管理器
 const sessionManager = new SessionManager();
 
-// Check for stored authentication state on page load
-async function checkStoredAuthState() {
-  try {
-    // 初始化IndexedDB
-    await sessionManager.init();
-    
-    // 尝试从IndexedDB获取存储的会话
-    if (window.currentUser) {
-      // 用户已经通过Firebase认证，更新存储的会话信息
-      const userObj = {
-        uid: window.currentUser.uid,
-        email: window.currentUser.email,
-        displayName: window.currentUser.displayName
-      };
-      await sessionManager.storeSession(userObj);
-    } else {
-      // 检查是否存在存储的会话
-      // 注意：我们不主动恢复会话，而是依赖Firebase的内置持久化
-      // 但我们可以检查是否有存储的会话信息
-      console.log("Checking for stored session in IndexedDB...");
-    }
-  } catch (error) {
-    console.error("Error initializing session manager:", error);
-  }
-}
-
 // Listen for auth state changes
 auth.onAuthStateChanged(async user => {
   if (user) {
     window.currentUser = user;
     
-    // Store user info in IndexedDB for persistence
-    const userObj = {
-      uid: user.uid,
-      email: user.email,
-      displayName: user.displayName
-    };
-    
+    // Initialize session manager if needed and store user info in IndexedDB for persistence
     try {
+      if (!sessionManager.db) {
+        await sessionManager.init();
+      }
+      
+      const userObj = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName
+      };
       await sessionManager.storeSession(userObj);
       console.log("Session stored in IndexedDB successfully");
     } catch (error) {
@@ -529,8 +506,20 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
-// Check for stored auth state when script loads
-checkStoredAuthState();
+// Check for stored auth state on page load (only after everything is initialized)
+window.addEventListener('load', async () => {
+  try {
+    // 初始化IndexedDB
+    await sessionManager.init();
+    
+    // 检查是否存在存储的会话
+    // 注意：我们不主动恢复会话，而是依赖Firebase的内置持久化
+    // 但我们可以检查是否有存储的会话信息
+    console.log("IndexedDB session manager initialized on page load");
+  } catch (error) {
+    console.error("Error initializing session manager:", error);
+  }
+});
 
 // Expose functions to global scope for use by UI layer
 window.setupAuthHandlers = setupAuthHandlers;
