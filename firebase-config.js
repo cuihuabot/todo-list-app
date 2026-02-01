@@ -15,17 +15,11 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 
-// DOM Elements
-const loginForm = document.getElementById('loginForm');
-const registerForm = document.getElementById('registerForm');
-const todoApp = document.getElementById('todoApp');
-const authSection = document.getElementById('authSection');
-const userList = document.getElementById('userList');
-const todoList = document.getElementById('todoList');
-const userInfo = document.getElementById('userInfo');
+// 在外部JS文件中，我们不直接获取DOM元素
+// 而是在主HTML文件中获取后传递给这里定义的函数
 
 // Authentication functions
-function setupAuthHandlers() {
+function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userInfo, todoList) {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -33,12 +27,16 @@ function setupAuthHandlers() {
       const password = loginForm.password.value;
       
       try {
+        console.log("开始登录..."); // Debug logging
         const userCredential = await auth.signInWithEmailAndPassword(email, password);
-        currentUser = userCredential.user;
-        await loadUserTodos();
-        showApp();
+        console.log("登录成功:", userCredential.user); // Debug logging
+        
+        window.currentUser = userCredential.user;
+        await loadUserTodos(todoList);
+        showApp(todoApp, authSection, userInfo);
       } catch (error) {
-        alert(error.message);
+        console.error("登录过程中发生错误:", error); // Debug logging
+        alert(`登录失败: ${error.message}\n错误代码: ${error.code}`);
       }
     });
   }
@@ -46,40 +44,70 @@ function setupAuthHandlers() {
   if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      const displayName = registerForm.displayName.value;
       const email = registerForm.email.value;
       const password = registerForm.password.value;
-      const displayName = registerForm.displayName.value;
+      const confirmPassword = registerForm.confirmPassword.value;
+      
+      console.log("注册表单提交:", { displayName, email }); // Debug logging
+      
+      if (!displayName || !email || !password || !confirmPassword) {
+        alert('请填写所有必填字段');
+        console.log("字段验证失败"); // Debug logging
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        alert('密码和确认密码不匹配');
+        console.log("密码验证失败"); // Debug logging
+        return;
+      }
+      
+      if (password.length < 6) {
+        alert('密码长度至少为6位');
+        console.log("密码长度验证失败"); // Debug logging
+        return;
+      }
       
       try {
+        console.log("开始创建用户..."); // Debug logging
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        console.log("用户创建成功:", userCredential.user); // Debug logging
+        
         await userCredential.user.updateProfile({ displayName });
-        currentUser = userCredential.user;
+        console.log("用户资料显示名称更新成功"); // Debug logging
+        
+        window.currentUser = userCredential.user;
         await initializeUserTodos();
-        showApp();
+        console.log("用户待办事项初始化成功"); // Debug logging
+        
+        showApp(todoApp, authSection, userInfo);
+        console.log("应用界面切换成功"); // Debug logging
       } catch (error) {
-        alert(error.message);
+        console.error("注册过程中发生错误:", error); // Debug logging
+        alert(`注册失败: ${error.message}\n错误代码: ${error.code}`);
       }
     });
   }
 }
 
 // Todo functions
-async function loadUserTodos() {
-  if (!currentUser) return;
+async function loadUserTodos(todoList) {
+  if (!window.currentUser) return;
   
-  const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+  const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
   const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
   
-  const todos = [];
+  window.todos = [];
   snapshot.forEach(doc => {
-    todos.push({ id: doc.id, ...doc.data() });
+    window.todos.push({ id: doc.id, ...doc.data() });
   });
   
-  renderTodos(todos);
+  renderTodos(window.todos, todoList);
 }
 
-async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
-  if (!currentUser) return;
+async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '', todoList) {
+  if (!window.currentUser) return;
   
   const newTodo = {
     text,
@@ -92,28 +120,28 @@ async function addTodo(text, description = '', priority = 'medium', category = '
     completedAt: null
   };
   
-  const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+  const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
   await todosRef.add(newTodo);
-  await loadUserTodos();
+  await loadUserTodos(todoList);
 }
 
-async function updateTodo(id, updates) {
-  if (!currentUser) return;
+async function updateTodo(id, updates, todoList) {
+  if (!window.currentUser) return;
   
-  const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+  const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
   await todoRef.update(updates);
-  await loadUserTodos();
+  await loadUserTodos(todoList);
 }
 
-async function deleteTodo(id) {
-  if (!currentUser) return;
+async function deleteTodo(id, todoList) {
+  if (!window.currentUser) return;
   
-  const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+  const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
   await todoRef.delete();
-  await loadUserTodos();
+  await loadUserTodos(todoList);
 }
 
-function renderTodos(todos) {
+function renderTodos(todos, todoList) {
   if (!todoList) return;
   
   todoList.innerHTML = '';
@@ -146,39 +174,39 @@ function renderTodos(todos) {
   });
 }
 
-async function toggleComplete(id, completed) {
+async function toggleComplete(id, completed, todoList) {
   await updateTodo(id, { 
     completed, 
     completedAt: completed ? firebase.firestore.FieldValue.serverTimestamp() : null 
-  });
+  }, todoList);
 }
 
-function editTodo(id, text, description, priority, category, dueDate) {
+function editTodo(id, text, description, priority, category, dueDate, todoList) {
   // Implementation for editing a todo
   const newText = prompt('编辑任务:', text);
   if (newText !== null) {
-    updateTodo(id, { text: newText, description, priority, category, dueDate });
+    updateTodo(id, { text: newText, description, priority, category, dueDate }, todoList);
   }
 }
 
 async function initializeUserTodos() {
   // Create a default collection for the user if it doesn't exist
-  const userRef = db.collection('users').doc(currentUser.uid);
+  const userRef = db.collection('users').doc(window.currentUser.uid);
   await userRef.set({
-    uid: currentUser.uid,
-    email: currentUser.email,
-    displayName: currentUser.displayName || currentUser.email,
+    uid: window.currentUser.uid,
+    email: window.currentUser.email,
+    displayName: window.currentUser.displayName || window.currentUser.email,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 }
 
-function showApp() {
+function showApp(todoApp, authSection, userInfo) {
   if (authSection) authSection.style.display = 'none';
   if (todoApp) todoApp.style.display = 'block';
-  if (userInfo) userInfo.textContent = `欢迎, ${currentUser.displayName || currentUser.email}`;
+  if (userInfo) userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
 }
 
-function logout() {
+function logout(todoApp, authSection) {
   auth.signOut();
   if (authSection) authSection.style.display = 'block';
   if (todoApp) todoApp.style.display = 'none';
@@ -187,20 +215,25 @@ function logout() {
 // Listen for auth state changes
 auth.onAuthStateChanged(user => {
   if (user) {
-    currentUser = user;
-    loadUserTodos();
-    showApp();
+    window.currentUser = user;
+    loadUserTodos(window.todoList);
+    showApp(window.todoApp, window.authSection, window.userInfo);
   } else {
-    if (authSection) authSection.style.display = 'block';
-    if (todoApp) todoApp.style.display = 'none';
+    if (window.authSection) window.authSection.style.display = 'block';
+    if (window.todoApp) window.todoApp.style.display = 'none';
   }
 });
 
-// Initialize the app
-document.addEventListener('DOMContentLoaded', setupAuthHandlers);
-
 // Expose functions to global scope for inline handlers
-window.toggleComplete = toggleComplete;
-window.editTodo = editTodo;
+// These functions will be called from the main HTML file
+window.setupAuthHandlers = setupAuthHandlers;
+window.loadUserTodos = loadUserTodos;
+window.addTodo = addTodo;
+window.updateTodo = updateTodo;
 window.deleteTodo = deleteTodo;
+window.toggleComplete = toggleComplete;
+window.renderTodos = renderTodos;
+window.editTodo = editTodo;
+window.initializeUserTodos = initializeUserTodos;
+window.showApp = showApp;
 window.logout = logout;

@@ -702,97 +702,31 @@
             search: ''
         };
 
-        // DOM Elements
-        const authSection = document.getElementById('authSection');
-        const todoApp = document.getElementById('todoApp');
-        const userInfo = document.getElementById('userInfo');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const loginFormContainer = document.getElementById('loginFormContainer');
+        // DOM Elements - 只在这里声明一次，避免重复声明
+        window.authSection = document.getElementById('authSection');
+        window.todoApp = document.getElementById('todoApp');
+        window.userInfo = document.getElementById('userInfo');
+        window.loginForm = document.getElementById('loginForm');
+        window.registerForm = document.getElementById('registerForm');
+        window.loginFormContainer = document.getElementById('loginFormContainer');
+        window.registerFormContainer = document.getElementById('registerFormContainer');
+        window.todoList = document.getElementById('todoList');
+        window.loadingIndicator = document.getElementById('loadingIndicator');
         const registerFormContainer = document.getElementById('registerFormContainer');
         const todoList = document.getElementById('todoList');
         const loadingIndicator = document.getElementById('loadingIndicator');
 
         // Form handlers
-        if (loginForm) {
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('loginEmail').value;
-                const password = document.getElementById('loginPassword').value;
-                
-                console.log("登录表单提交:", { email }); // Debug logging
-                
-                if (!email || !password) {
-                    alert('请填写邮箱和密码');
-                    console.log("登录字段验证失败"); // Debug logging
-                    return;
-                }
-                
-                try {
-                    console.log("开始登录..."); // Debug logging
-                    const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                    console.log("登录成功:", userCredential.user); // Debug logging
-                    
-                    currentUser = userCredential.user;
-                    await loadUserTodos();
-                    console.log("用户待办事项加载成功"); // Debug logging
-                    
-                    showApp();
-                    console.log("应用界面切换成功"); // Debug logging
-                } catch (error) {
-                    console.error("登录过程中发生错误:", error); // Debug logging
-                    alert(`登录失败: ${error.message}\n错误代码: ${error.code}`);
-                }
-            });
-        }
-
-        if (registerForm) {
-            registerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const displayName = document.getElementById('registerDisplayName').value;
-                const email = document.getElementById('registerEmail').value;
-                const password = document.getElementById('registerPassword').value;
-                const confirmPassword = document.getElementById('registerConfirmPassword').value;
-                
-                console.log("注册表单提交:", { displayName, email }); // Debug logging
-                
-                if (!displayName || !email || !password || !confirmPassword) {
-                    alert('请填写所有必填字段');
-                    console.log("字段验证失败"); // Debug logging
-                    return;
-                }
-                
-                if (password !== confirmPassword) {
-                    alert('密码和确认密码不匹配');
-                    console.log("密码验证失败"); // Debug logging
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    alert('密码长度至少为6位');
-                    console.log("密码长度验证失败"); // Debug logging
-                    return;
-                }
-                
-                try {
-                    console.log("开始创建用户..."); // Debug logging
-                    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-                    console.log("用户创建成功:", userCredential.user); // Debug logging
-                    
-                    await userCredential.user.updateProfile({ displayName });
-                    console.log("用户资料显示名称更新成功"); // Debug logging
-                    
-                    currentUser = userCredential.user;
-                    await initializeUserTodos();
-                    console.log("用户待办事项初始化成功"); // Debug logging
-                    
-                    showApp();
-                    console.log("应用界面切换成功"); // Debug logging
-                } catch (error) {
-                    console.error("注册过程中发生错误:", error); // Debug logging
-                    alert(`注册失败: ${error.message}\n错误代码: ${error.code}`);
-                }
-            });
+        // 初始化认证处理器，传入必要的DOM元素
+        if (window.loginForm && window.registerForm) {
+            window.setupAuthHandlers(
+                window.loginForm,
+                window.registerForm,
+                window.todoApp,
+                window.authSection,
+                window.userInfo,
+                window.todoList
+            );
         }
 
         // Show registration form
@@ -1142,18 +1076,18 @@
             
             if (!title) return;
             
-            if (editingId) {
+            if (window.editingId) {
                 // Update existing todo
-                await updateTodo(editingId, {
+                await window.updateTodo(window.editingId, {
                     text: title,
                     description,
                     priority,
                     category,
                     dueDate
-                });
+                }, window.todoList);
             } else {
                 // Add new todo
-                await addTodo(title, description, priority, category, dueDate);
+                await window.addTodo(title, description, priority, category, dueDate, window.todoList);
             }
             
             closeModal();
@@ -1183,24 +1117,24 @@
 
         // Show the app after login
         function showApp() {
-            if (authSection) authSection.style.display = 'none';
-            if (todoApp) todoApp.style.display = 'block';
-            if (userInfo) userInfo.textContent = `欢迎, ${currentUser.displayName || currentUser.email}`;
+            if (window.authSection) window.authSection.style.display = 'none';
+            if (window.todoApp) window.todoApp.style.display = 'block';
+            if (window.userInfo) window.userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
         }
 
         // Logout function
         async function logout() {
             try {
                 await auth.signOut();
-                currentUser = null;
-                todos = [];
+                window.currentUser = null;
+                window.todos = [];
                 
-                if (authSection) authSection.style.display = 'block';
-                if (todoApp) todoApp.style.display = 'none';
+                if (window.authSection) window.authSection.style.display = 'block';
+                if (window.todoApp) window.todoApp.style.display = 'none';
                 
                 // Reset forms
-                if (loginForm) loginForm.reset();
-                if (registerForm) registerForm.reset();
+                if (window.loginForm) window.loginForm.reset();
+                if (window.registerForm) window.registerForm.reset();
             } catch (error) {
                 console.error('Error signing out:', error);
             }
@@ -1209,19 +1143,19 @@
         // Listen for auth state changes
         auth.onAuthStateChanged(user => {
             if (user) {
-                currentUser = user;
+                window.currentUser = user;
                 showApp();
-                loadUserTodos();
+                window.loadUserTodos(window.todoList);
             } else {
-                if (authSection) authSection.style.display = 'block';
-                if (todoApp) todoApp.style.display = 'none';
+                if (window.authSection) window.authSection.style.display = 'block';
+                if (window.todoApp) window.todoApp.style.display = 'none';
             }
         });
 
         // Initialize search event listener
         document.getElementById('searchInput').addEventListener('input', () => {
-            filters.search = document.getElementById('searchInput').value.trim();
-            renderTodos();
+            window.filters.search = document.getElementById('searchInput').value.trim();
+            window.renderTodos(window.todos, window.todoList);
         });
 
         // 确保这些函数在全局范围内可用
@@ -1238,8 +1172,17 @@
         // Expose functions to global scope for inline handlers
         window.showRegisterForm = showRegisterForm;
         window.showLoginForm = showLoginForm;
-        window.toggleTodo = toggleTodo;
-        window.deleteTodo = deleteTodo;
+        window.toggleTodo = function(id) {
+            const todo = window.todos.find(t => t.id === id);
+            if (todo) {
+                window.toggleComplete(id, !todo.completed, window.todoList);
+            }
+        };
+        window.deleteTodo = function(id) {
+            if (confirm('确定要删除这个任务吗？')) {
+                window.deleteTodo(id, window.todoList);
+            }
+        };
         window.toggleDescription = toggleDescription;
         window.filterTodos = filterTodos;
         window.changeView = changeView;
@@ -1247,7 +1190,9 @@
         window.handleSearch = handleSearch;
         window.showAddModal = showAddModal;
         window.closeModal = closeModal;
-        window.logout = logout;
+        window.logout = function() {
+            logout(window.todoApp, window.authSection);
+        };
     </script>
 </body>
 </html>
