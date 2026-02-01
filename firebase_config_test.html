@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase配置测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .code-block {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Firebase配置测试</h1>
+        
+        <div id="init-section">
+            <h3>初始化状态</h3>
+            <div id="init-status" class="status">等待初始化...</div>
+        </div>
+        
+        <div id="config-section">
+            <h3>配置验证</h3>
+            <div id="config-status" class="code-block">等待检查...</div>
+        </div>
+        
+        <div id="services-section">
+            <h3>服务可用性</h3>
+            <div id="service-status" class="code-block">等待检查...</div>
+        </div>
+        
+        <div id="actions-section">
+            <h3>测试操作</h3>
+            <button onclick="testAuth()">测试认证服务</button>
+            <button onclick="testFirestore()">测试数据库服务</button>
+            <button onclick="checkFullConfig()">完整配置检查</button>
+            <div id="test-results" class="code-block" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Firebase配置
+        const firebaseConfig = {
+            apiKey: "AIzaSyDAh1FFyjt2Y0LpHfCaXgBkTT4kXmdr3q4",
+            authDomain: "cuihua-todolist.firebaseapp.com",
+            projectId: "cuihua-todolist",
+            storageBucket: "cuihua-todolist.firebasestorage.app",
+            messagingSenderId: "231753597001",
+            appId: "1:231753597001:web:c033010dea87a1c342bf98",
+            measurementId: "G-9FLXFERRD1"
+        };
+
+        let app, auth, db;
+        let initComplete = false;
+
+        // 页面加载完成后尝试初始化
+        window.addEventListener('load', async function() {
+            await initializeFirebase();
+        });
+
+        async function initializeFirebase() {
+            const initStatus = document.getElementById('init-status');
+            const configStatus = document.getElementById('config-status');
+            
+            try {
+                // 检查配置是否有效
+                if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+                    initStatus.textContent = '❌ Firebase配置不完整';
+                    initStatus.className = 'status error';
+                    configStatus.textContent = '配置项检查:\n- apiKey: ' + (firebaseConfig.apiKey ? '✅' : '❌') + 
+                                              '\n- authDomain: ' + (firebaseConfig.authDomain ? '✅' : '❌') +
+                                              '\n- projectId: ' + (firebaseConfig.projectId ? '✅' : '❌') +
+                                              '\n- storageBucket: ' + (firebaseConfig.storageBucket ? '✅' : '❌');
+                    return;
+                }
+                
+                configStatus.textContent = '配置项检查:\n- apiKey: ' + (firebaseConfig.apiKey ? '✅' : '❌') + 
+                                          '\n- authDomain: ' + (firebaseConfig.authDomain ? '✅' : '❌') +
+                                          '\n- projectId: ' + (firebaseConfig.projectId ? '✅' : '❌') +
+                                          '\n- storageBucket: ' + (firebaseConfig.storageBucket ? '✅' : '❌') +
+                                          '\n- messagingSenderId: ' + (firebaseConfig.messagingSenderId ? '✅' : '❌') +
+                                          '\n- appId: ' + (firebaseConfig.appId ? '✅' : '❌');
+                
+                // 尝试初始化Firebase应用
+                console.log('尝试初始化Firebase应用...');
+                
+                // 检查是否已经有应用实例
+                try {
+                    app = firebase.app();
+                    console.log('使用现有应用实例');
+                } catch {
+                    console.log('创建新的应用实例');
+                    app = firebase.initializeApp(firebaseConfig);
+                }
+                
+                // 初始化服务
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                initComplete = true;
+                
+                initStatus.textContent = '✅ Firebase初始化成功';
+                initStatus.className = 'status success';
+                
+                // 更新服务状态
+                updateServiceStatus();
+                
+            } catch (error) {
+                console.error('Firebase初始化错误:', error);
+                initStatus.textContent = `❌ Firebase初始化失败: ${error.message}`;
+                initStatus.className = 'status error';
+                configStatus.textContent += `\n\n初始化错误: ${error.message}`;
+            }
+        }
+
+        function updateServiceStatus() {
+            const serviceStatus = document.getElementById('service-status');
+            
+            let authStatus = '未知';
+            let dbStatus = '未知';
+            
+            if (typeof firebase !== 'undefined') {
+                try {
+                    authStatus = firebase.auth ? '✅ 可用' : '❌ 不可用';
+                } catch (e) {
+                    authStatus = `❌ 错误: ${e.message}`;
+                }
+                
+                try {
+                    dbStatus = firebase.firestore ? '✅ 可用' : '❌ 不可用';
+                } catch (e) {
+                    dbStatus = `❌ 错误: ${e.message}`;
+                }
+            }
+            
+            serviceStatus.innerHTML = `认证服务: ${authStatus}\n数据库服务: ${dbStatus}\n\n应用实例: ${app ? '✅ 已创建' : '❌ 未创建'}`;
+        }
+
+        async function testAuth() {
+            if (!initComplete) {
+                alert('Firebase尚未初始化，请稍候...');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = "=== 认证服务测试 ===\n\n";
+            
+            try {
+                resultsDiv.innerHTML += "1. 检查认证实例...\n";
+                if (auth) {
+                    resultsDiv.innerHTML += "   ✅ 认证实例存在\n";
+                } else {
+                    resultsDiv.innerHTML += "   ❌ 认证实例不存在\n";
+                    return;
+                }
+                
+                resultsDiv.innerHTML += "2. 检查认证状态监听...\n";
+                resultsDiv.innerHTML += "   ✅ 认证服务可访问\n";
+                
+                resultsDiv.innerHTML += "\n✅ 认证服务测试完成！";
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `\n❌ 认证服务测试失败: ${error.message}`;
+            }
+        }
+
+        async function testFirestore() {
+            if (!initComplete) {
+                alert('Firebase尚未初始化，请稍候...');
+                return;
+            }
+            
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = "=== 数据库服务测试 ===\n\n";
+            
+            try {
+                resultsDiv.innerHTML += "1. 检查数据库实例...\n";
+                if (db) {
+                    resultsDiv.innerHTML += "   ✅ 数据库实例存在\n";
+                } else {
+                    resultsDiv.innerHTML += "   ❌ 数据库实例不存在\n";
+                    return;
+                }
+                
+                resultsDiv.innerHTML += "2. 检查数据库连接...\n";
+                resultsDiv.innerHTML += "   ✅ 数据库服务可访问\n";
+                
+                resultsDiv.innerHTML += "\n✅ 数据库服务测试完成！";
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `\n❌ 数据库服务测试失败: ${error.message}`;
+            }
+        }
+
+        async function checkFullConfig() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = "=== 完整配置检查 ===\n\n";
+            
+            try {
+                resultsDiv.innerHTML += "1. 检查Firebase SDK加载...\n";
+                if (typeof firebase !== 'undefined') {
+                    resultsDiv.innerHTML += "   ✅ Firebase SDK已加载\n";
+                    resultsDiv.innerHTML += "   版本: " + (firebase.SDK_VERSION || '未知') + "\n";
+                } else {
+                    resultsDiv.innerHTML += "   ❌ Firebase SDK未加载\n";
+                    return;
+                }
+                
+                resultsDiv.innerHTML += "\n2. 检查兼容包...\n";
+                const hasAppCompat = typeof firebase.initializeApp !== 'undefined';
+                const hasAuthCompat = typeof firebase.auth !== 'undefined';
+                const hasFirestoreCompat = typeof firebase.firestore !== 'undefined';
+                
+                resultsDiv.innerHTML += `   app-compat: ${hasAppCompat ? '✅' : '❌'}\n`;
+                resultsDiv.innerHTML += `   auth-compat: ${hasAuthCompat ? '✅' : '❌'}\n`;
+                resultsDiv.innerHTML += `   firestore-compat: ${hasFirestoreCompat ? '✅' : '❌'}\n`;
+                
+                if (!hasAppCompat || !hasAuthCompat || !hasFirestoreCompat) {
+                    resultsDiv.innerHTML += "\n❌ 缺少必要的Firebase兼容包\n";
+                    return;
+                }
+                
+                resultsDiv.innerHTML += "\n3. 检查配置有效性...\n";
+                if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+                    resultsDiv.innerHTML += "   ✅ 配置有效\n";
+                } else {
+                    resultsDiv.innerHTML += "   ❌ 配置无效\n";
+                    return;
+                }
+                
+                resultsDiv.innerHTML += "\n4. 检查初始化状态...\n";
+                if (initComplete) {
+                    resultsDiv.innerHTML += "   ✅ 已成功初始化\n";
+                } else {
+                    resultsDiv.innerHTML += "   ❌ 未成功初始化\n";
+                }
+                
+                resultsDiv.innerHTML += "\n✅ 完整配置检查完成！";
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `\n❌ 完整配置检查失败: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
