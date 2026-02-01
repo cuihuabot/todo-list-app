@@ -1050,10 +1050,10 @@
                     priority,
                     category,
                     dueDate
-                }, window.todoList);
+                });
             } else {
                 // Add new todo
-                await window.addTodo(title, description, priority, category, dueDate, window.todoList);
+                await window.addTodo(title, description, priority, category, dueDate);
             }
 
             closeModal();
