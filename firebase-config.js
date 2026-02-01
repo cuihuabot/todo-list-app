@@ -156,11 +156,11 @@ function renderTodos(todos, todoList) {
     todoElement.className = 'todo-item';
     todoElement.innerHTML = `
       <div class="todo-header">
-        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="toggleComplete('${todo.id}', ${!todo.completed})">
+        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="window.toggleComplete('${todo.id}', ${!todo.completed}, window.todoList)">
         <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
         <div class="todo-actions">
-          <button onclick="editTodo('${todo.id}', '${todo.text}', '${todo.description}', '${todo.priority}', '${todo.category}', '${todo.dueDate}')">编辑</button>
-          <button onclick="deleteTodo('${todo.id}')">删除</button>
+          <button onclick="window.editTodo('${todo.id}', '${todo.text}', '${todo.description}', '${todo.priority}', '${todo.category}', '${todo.dueDate}', window.todoList)">编辑</button>
+          <button onclick="window.deleteTodo('${todo.id}', window.todoList)">删除</button>
         </div>
       </div>
       ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
