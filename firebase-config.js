@@ -267,58 +267,171 @@ function updatePassword(currentPassword, newPassword) {
     });
 }
 
-// Cookie utility functions
-function setCookie(name, value, days) {
-  const expires = new Date();
-  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-}
-
-function getCookie(name) {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  for(let i = 0; i < ca.length; i++) {
-    let c = ca[i];
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+// IndexedDB Session Manager
+class SessionManager {
+  constructor() {
+    this.dbName = 'TodoAppSessionDB';
+    this.version = 1;
+    this.db = null;
   }
-  return null;
+
+  // 初始化数据库
+  async init() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(this.dbName, this.version);
+      
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        this.db = request.result;
+        console.log("IndexedDB initialized successfully");
+        resolve(this.db);
+      };
+      
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains('sessions')) {
+          const objectStore = db.createObjectStore('sessions', { keyPath: 'uid' });
+          objectStore.createIndex('expires', 'expires', { unique: false });
+          console.log("Created sessions object store");
+        }
+      };
+    });
+  }
+
+  // 存储会话
+  async storeSession(userData) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['sessions'], 'readwrite');
+    const store = transaction.objectStore('sessions');
+    
+    const sessionData = {
+      uid: userData.uid,
+      email: userData.email,
+      displayName: userData.displayName,
+      expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30天后过期
+    };
+    
+    return new Promise((resolve, reject) => {
+      const request = store.put(sessionData);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // 获取会话
+  async getSession(uid) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['sessions'], 'readonly');
+    const store = transaction.objectStore('sessions');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.get(uid);
+      request.onsuccess = () => {
+        const session = request.result;
+        // 检查是否过期
+        if (session && session.expires > Date.now()) {
+          console.log("Valid session found in IndexedDB");
+          resolve(session);
+        } else {
+          // 删除过期会话
+          if (session) {
+            console.log("Session expired, removing from IndexedDB");
+            this.clearSession(uid);
+          }
+          resolve(null);
+        }
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // 清除会话
+  async clearSession(uid) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['sessions'], 'readwrite');
+    const store = transaction.objectStore('sessions');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.delete(uid);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // 清除所有过期会话
+  async clearExpiredSessions() {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['sessions'], 'readwrite');
+    const store = transaction.objectStore('sessions');
+    const expiresIndex = store.index('expires');
+    
+    const request = expiresIndex.openCursor(IDBKeyRange.upperBound(Date.now()));
+    return new Promise((resolve) => {
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (cursor) {
+          cursor.delete();
+          cursor.continue();
+        } else {
+          console.log("Expired sessions cleanup completed");
+          resolve();
+        }
+      };
+    });
+  }
 }
 
-function eraseCookie(name) {
-  document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-}
+// 初始化会话管理器
+const sessionManager = new SessionManager();
 
 // Check for stored authentication state on page load
-function checkStoredAuthState() {
-  const storedUser = getCookie('currentUser');
-  if (storedUser) {
-    try {
-      const userObj = JSON.parse(storedUser);
-      // Check if user object has necessary properties
-      if (userObj.uid && userObj.email) {
-        // Create a minimal user-like object to indicate we have stored credentials
-        // We'll let Firebase handle the actual authentication state
-        console.log("Found stored user, checking auth state...");
-      }
-    } catch (e) {
-      console.error("Error parsing stored user:", e);
-      eraseCookie('currentUser');
+async function checkStoredAuthState() {
+  try {
+    // 初始化IndexedDB
+    await sessionManager.init();
+    
+    // 尝试从IndexedDB获取存储的会话
+    if (window.currentUser) {
+      // 用户已经通过Firebase认证，更新存储的会话信息
+      const userObj = {
+        uid: window.currentUser.uid,
+        email: window.currentUser.email,
+        displayName: window.currentUser.displayName
+      };
+      await sessionManager.storeSession(userObj);
+    } else {
+      // 检查是否存在存储的会话
+      // 注意：我们不主动恢复会话，而是依赖Firebase的内置持久化
+      // 但我们可以检查是否有存储的会话信息
+      console.log("Checking for stored session in IndexedDB...");
     }
+  } catch (error) {
+    console.error("Error initializing session manager:", error);
   }
 }
 
 // Listen for auth state changes
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged(async user => {
   if (user) {
     window.currentUser = user;
-    // Store user info in cookie for persistence
+    
+    // Store user info in IndexedDB for persistence
     const userObj = {
       uid: user.uid,
       email: user.email,
       displayName: user.displayName
     };
-    setCookie('currentUser', JSON.stringify(userObj), 30); // Store for 30 days
+    
+    try {
+      await sessionManager.storeSession(userObj);
+      console.log("Session stored in IndexedDB successfully");
+    } catch (error) {
+      console.error("Error storing session in IndexedDB:", error);
+    }
     
     // 通知UI层用户已登录
     if (typeof window.onUserLoggedIn === 'function') {
@@ -326,20 +439,20 @@ auth.onAuthStateChanged(user => {
     }
     // 注意：这里不调用showApp，因为UI层会处理显示逻辑
   } else {
-    // Check if we have stored credentials
-    const storedUser = getCookie('currentUser');
-    if (storedUser) {
-      // Try to restore the session by attempting to sign in silently
-      // (Note: Firebase doesn't support cookie-based sessions directly,
-      // so we rely on Firebase's built-in session persistence)
-      console.log("Stored credentials found, waiting for Firebase to restore session...");
-    } else {
-      // No stored credentials, completely logged out
-      // 退出登录，重置UI
-      window.currentUser = null;
-      if (typeof window.onUserLoggedOut === 'function') {
-        window.onUserLoggedOut();
+    // 用户已登出，清除存储的会话
+    try {
+      if (window.currentUser) {
+        await sessionManager.clearSession(window.currentUser.uid);
+        console.log("Session cleared from IndexedDB");
       }
+    } catch (error) {
+      console.error("Error clearing session from IndexedDB:", error);
+    }
+    
+    // 退出登录，重置UI
+    window.currentUser = null;
+    if (typeof window.onUserLoggedOut === 'function') {
+      window.onUserLoggedOut();
     }
   }
 });
