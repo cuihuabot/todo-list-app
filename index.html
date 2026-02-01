@@ -467,20 +467,20 @@
                 gap: 10px;
                 text-align: center;
             }
-            
+
             .controls {
                 grid-template-columns: 1fr;
                 gap: 15px;
             }
-            
+
             .input-group {
                 flex-direction: column;
             }
-            
+
             .filters, .view-controls {
                 justify-content: center;
             }
-            
+
             .advanced-filters {
                 grid-template-columns: 1fr;
             }
@@ -492,7 +492,7 @@
     <div id="authSection" class="container auth-section">
         <h2>📋 Multi-User Todo List</h2>
         <p>登录或注册以开始使用</p>
-        
+
         <div class="auth-form">
             <div id="loginFormContainer">
                 <h3>登录</h3>
@@ -507,12 +507,12 @@
                     </div>
                     <button type="submit" class="btn-primary">登录</button>
                 </form>
-                
+
                 <div class="auth-toggle">
                     <p>还没有账户？ <a href="#" onclick="showRegisterForm()">立即注册</a></p>
                 </div>
             </div>
-            
+
             <div id="registerFormContainer" style="display: none;">
                 <h3>注册</h3>
                 <form id="registerForm">
@@ -534,7 +534,7 @@
                     </div>
                     <button type="submit" class="btn-primary">注册</button>
                 </form>
-                
+
                 <div class="auth-toggle">
                     <p>已有账户？ <a href="#" onclick="showLoginForm()">立即登录</a></p>
                 </div>
@@ -554,11 +554,11 @@
                 <button class="logout-btn" onclick="logout()">登出</button>
             </div>
         </div>
-        
+
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="搜索任务...">
         </div>
-        
+
         <div class="controls">
             <div class="input-group">
                 <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100">
@@ -576,7 +576,7 @@
                 <button onclick="changeView('grid')" id="viewGrid">网格</button>
             </div>
         </div>
-        
+
         <div class="advanced-filters">
             <div class="filter-group">
                 <label for="priorityFilter">优先级</label>
@@ -609,13 +609,13 @@
                 </select>
             </div>
         </div>
-        
+
         <div class="todo-list" id="todoList">
             <div class="loading" id="loadingIndicator">
                 <i class="fas fa-spinner fa-spin"></i> 加载中...
             </div>
         </div>
-        
+
         <div class="stats">
             <div class="stat-item">
                 <div class="stat-number" id="totalCount">0</div>
@@ -728,27 +728,27 @@
 
         // Show registration form
         function showRegisterForm() {
-            loginFormContainer.style.display = 'none';
-            registerFormContainer.style.display = 'block';
+            if (window.loginFormContainer) window.loginFormContainer.style.display = 'none';
+            if (window.registerFormContainer) window.registerFormContainer.style.display = 'block';
         }
 
         // Show login form
         function showLoginForm() {
-            registerFormContainer.style.display = 'none';
-            loginFormContainer.style.display = 'block';
+            if (window.registerFormContainer) window.registerFormContainer.style.display = 'none';
+            if (window.loginFormContainer) window.loginFormContainer.style.display = 'block';
         }
 
         // Load user's todos from Firestore (using data layer)
         async function loadUserTodos() {
             if (!window.currentUser) return;
-            
+
             try {
                 // Use the data layer function
                 window.todos = await window.loadUserTodosData();
-                
+
                 renderTodos();
                 updateStats();
-                
+
                 if (window.loadingIndicator) {
                     window.loadingIndicator.style.display = 'none';
                 }
@@ -763,7 +763,7 @@
         // Add a new todo (using data layer)
         async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
             if (!window.currentUser || !text.trim()) return;
-            
+
             try {
                 await window.addTodoData(text, description, priority, category, dueDate);
                 // The data layer will trigger refresh via callback
@@ -776,7 +776,7 @@
         // Update a todo (using data layer)
         async function updateTodo(id, updates) {
             if (!window.currentUser || !id) return;
-            
+
             try {
                 await window.updateTodoData(id, updates);
                 // The data layer will trigger refresh via callback
@@ -789,9 +789,9 @@
         // Delete a todo (using data layer)
         async function deleteTodo(id) {
             if (!window.currentUser || !id) return;
-            
+
             if (!confirm('确定要删除这个任务吗？')) return;
-            
+
             try {
                 await window.deleteTodoData(id);
                 // The data layer will trigger refresh via callback
@@ -805,9 +805,9 @@
         async function toggleTodo(id) {
             const todo = window.todos.find(t => t.id === id);
             if (!todo) return;
-            
+
             try {
-                await window.updateTodoData(id, { 
+                await window.updateTodoData(id, {
                     completed: !todo.completed,
                     completedAt: !todo.completed ? firebase.firestore.FieldValue.serverTimestamp() : null
                 });
@@ -820,9 +820,9 @@
         // Render todos based on current filters
         function renderTodos() {
             if (!window.todoList) return;
-            
+
             let filteredTodos = [...window.todos];
-            
+
             // Apply filters
             filteredTodos = filteredTodos.filter(todo => {
                 // Basic filter
@@ -830,26 +830,26 @@
                 if (window.currentFilter === 'completed') return todo.completed;
                 return true;
             });
-            
+
             // Priority filter
             if (window.filters.priority) {
                 filteredTodos = filteredTodos.filter(todo => todo.priority === window.filters.priority);
             }
-            
+
             // Category filter
             if (window.filters.category) {
                 filteredTodos = filteredTodos.filter(todo => todo.category === window.filters.category);
             }
-            
+
             // Due date filter
             if (window.filters.dueDate) {
                 filteredTodos = filteredTodos.filter(todo => {
                     if (!todo.dueDate) return false;
-                    
+
                     const due = new Date(todo.dueDate);
                     const now = new Date();
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                    
+
                     switch(window.filters.dueDate) {
                         case 'overdue':
                             return due < today && !todo.completed;
@@ -868,40 +868,40 @@
                     }
                 });
             }
-            
+
             // Search filter
             if (window.filters.search) {
                 const searchTerm = window.filters.search.toLowerCase();
-                filteredTodos = filteredTodos.filter(todo => 
+                filteredTodos = filteredTodos.filter(todo =>
                     todo.text.toLowerCase().includes(searchTerm) ||
                     (todo.description && todo.description.toLowerCase().includes(searchTerm)) ||
                     (todo.category && todo.category.toLowerCase().includes(searchTerm))
                 );
             }
-            
+
             // Render todos
             if (filteredTodos.length === 0) {
                 window.todoList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
-                        <p>🎉 ${window.currentFilter === 'all' ? '暂无待办事项' : 
-                              window.currentFilter === 'active' ? '暂无待办事项' : 
+                        <p>🎉 ${window.currentFilter === 'all' ? '暂无待办事项' :
+                              window.currentFilter === 'active' ? '暂无待办事项' :
                               '暂无已完成事项'}</p>
                         <p>${window.currentFilter === 'all' ? '添加一些任务开始吧！' : ''}</p>
                     </div>
                 `;
                 return;
             }
-            
+
             window.todoList.innerHTML = filteredTodos.map(todo => {
                 const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
                 const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
                 const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
-                
+
                 return `
                     <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
-                        <input type="checkbox" class="todo-checkbox" 
-                               ${todo.completed ? 'checked' : ''} 
+                        <input type="checkbox" class="todo-checkbox"
+                               ${todo.completed ? 'checked' : ''}
                                onchange="window.toggleTodo('${todo.id}')">
                         <div class="todo-content">
                             <div class="todo-header">
@@ -950,11 +950,11 @@
             const completedCount = window.todos.filter(todo => todo.completed).length;
             const activeCount = totalCount - completedCount;
             const overdueCount = window.todos.filter(todo => {
-                return todo.dueDate && 
-                       new Date(todo.dueDate) < new Date() && 
+                return todo.dueDate &&
+                       new Date(todo.dueDate) < new Date() &&
                        !todo.completed;
             }).length;
-            
+
             document.getElementById('totalCount').textContent = totalCount;
             document.getElementById('completedCount').textContent = completedCount;
             document.getElementById('activeCount').textContent = activeCount;
@@ -964,24 +964,24 @@
         // Filter todos
         function filterTodos(filter) {
             window.currentFilter = filter;
-            
+
             document.querySelectorAll('.filters button').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
-            
+
             renderTodos();
         }
 
         // Change view
         function changeView(view) {
             window.currentView = view;
-            
+
             document.querySelectorAll('.view-controls button').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById(`view${view.charAt(0).toUpperCase() + view.slice(1)}`).classList.add('active');
-            
+
             renderTodos();
         }
 
@@ -990,7 +990,7 @@
             window.filters.priority = document.getElementById('priorityFilter').value;
             window.filters.category = document.getElementById('categoryFilter').value;
             window.filters.dueDate = document.getElementById('dueDateFilter').value;
-            
+
             renderTodos();
         }
 
@@ -1003,7 +1003,7 @@
         // Show add/edit modal
         function showAddModal(todo = null) {
             window.editingId = todo ? todo.id : null;
-            
+
             if (todo) {
                 document.getElementById('modalTitle').textContent = '编辑任务';
                 document.getElementById('modalTitleInput').value = todo.text || '';
@@ -1019,7 +1019,7 @@
                 document.getElementById('modalCategory').value = 'personal';
                 document.getElementById('modalDueDate').value = '';
             }
-            
+
             document.getElementById('todoModal').style.display = 'block';
             document.getElementById('modalTitleInput').focus();
         }
@@ -1033,15 +1033,15 @@
         // Handle form submission for add/edit
         document.getElementById('todoForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const title = document.getElementById('modalTitleInput').value.trim();
             const description = document.getElementById('modalDescription').value.trim();
             const priority = document.getElementById('modalPriority').value;
             const category = document.getElementById('modalCategory').value;
             const dueDate = document.getElementById('modalDueDate').value;
-            
+
             if (!title) return;
-            
+
             if (window.editingId) {
                 // Update existing todo
                 await window.updateTodo(window.editingId, {
@@ -1055,7 +1055,7 @@
                 // Add new todo
                 await window.addTodo(title, description, priority, category, dueDate, window.todoList);
             }
-            
+
             closeModal();
         });
 
@@ -1094,10 +1094,10 @@
                 await auth.signOut();
                 window.currentUser = null;
                 window.todos = [];
-                
+
                 if (window.authSection) window.authSection.style.display = 'block';
                 if (window.todoApp) window.todoApp.style.display = 'none';
-                
+
                 // Reset forms
                 if (window.loginForm) window.loginForm.reset();
                 if (window.registerForm) window.registerForm.reset();
@@ -1139,16 +1139,8 @@
 
         // Expose functions to global scope for inline handlers
         // 仅覆盖需要特殊处理的函数
-        window.showRegisterForm = function() {
-            document.getElementById('loginFormContainer').style.display = 'none';
-            document.getElementById('registerFormContainer').style.display = 'block';
-        };
-        
-        window.showLoginForm = function() {
-            document.getElementById('registerFormContainer').style.display = 'none';
-            document.getElementById('loginFormContainer').style.display = 'block';
-        };
-        
+        // 注意：使用之前定义的函数，它们已经包含了安全检查
+
         // 从firebase-config.js导入的函数已经正确处理参数，无需重新定义
         // 保持原有的函数引用
     </script>
