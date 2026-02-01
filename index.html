@@ -58,11 +58,27 @@
 
         .header h1 {
             font-size: 1.8em;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
 
         .header p {
             opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
 
         .user-info {
@@ -188,6 +204,53 @@
         .view-controls button.active {
             background: var(--info);
             color: white;
+        }
+
+        /* Timeline View Styles */
+        .timeline-container {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--primary), var(--secondary));
+        }
+
+        .timeline-item {
+            margin-left: 40px;
+            position: relative;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: -50px;
+            top: 25px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 3px solid white;
+            z-index: 1;
+        }
+
+        .timeline-date {
+            position: absolute;
+            left: -80px;
+            top: 45px;
+            font-size: 12px;
+            color: var(--dark);
+            width: 60px;
+            text-align: right;
         }
 
         .advanced-filters {
@@ -609,6 +672,11 @@
             <div>
                 <h1>📋 Multi-User Todo List</h1>
                 <p>安全的个人待办事项管理</p>
+                <div class="header-stats">
+                    <span class="stat-badge">总计: <span id="headerTotalCount">0</span></span>
+                    <span class="stat-badge">待办: <span id="headerActiveCount">0</span></span>
+                    <span class="stat-badge">完成: <span id="headerCompletedCount">0</span></span>
+                </div>
             </div>
             <div class="user-controls">
                 <span class="user-info" id="userInfo">Loading...</span>
@@ -623,9 +691,9 @@
 
         <div class="controls">
             <div class="input-group">
-                <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100">
+                <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100" onkeypress="handleQuickAdd(event)">
                 <button onclick="window.showAddModal()">
-                    <i class="fas fa-plus"></i> 添加
+                    <i class="fas fa-plus"></i> 详情
                 </button>
             </div>
             <div class="filters">
@@ -636,6 +704,7 @@
             <div class="view-controls">
                 <button onclick="window.changeView('list')" id="viewList" class="active">列表</button>
                 <button onclick="window.changeView('grid')" id="viewGrid">网格</button>
+                <button onclick="window.changeView('timeline')" id="viewTimeline">时间轴</button>
             </div>
             <div class="bulk-actions">
                 <button onclick="window.selectAllTodos()" title="全选"><i class="fas fa-check-square"></i></button>
@@ -990,7 +1059,7 @@
                 );
             }
 
-            // Render todos
+            // Render todos based on current view
             if (filteredTodos.length === 0) {
                 window.todoList.innerHTML = `
                     <div class="empty-state">
@@ -1004,41 +1073,90 @@
                 return;
             }
 
-            window.todoList.innerHTML = filteredTodos.map(todo => {
-                const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
-                const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
-                const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
-
-                return `
-                    <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
-                        <input type="checkbox" class="todo-checkbox"
-                               ${todo.completed ? 'checked' : ''}
-                               onchange="window.toggleTodo('${todo.id}'); window.toggleTodoSelection(this, '${todo.id}')">
-                        <div class="todo-content">
-                            <div class="todo-header">
-                                <div class="todo-title">${todo.text}</div>
-                                <div class="todo-meta">
-                                    <span class="todo-priority priority-${todo.priority}">${todo.priority}</span>
-                                    <span class="todo-category">${todo.category}</span>
-                                    ${todo.dueDate ? `<span class="todo-due"><i class="far fa-calendar"></i> ${dueDateStr}</span>` : ''}
+            // Different rendering based on view type
+            if (window.currentView === 'timeline') {
+                // Sort by due date for timeline view
+                const sortedTodos = sortTodosByDate([...filteredTodos]);
+                
+                window.todoList.innerHTML = `
+                    <div class="timeline-container">
+                        <div class="timeline-line"></div>
+                        ${sortedTodos.map(todo => {
+                            const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
+                            const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
+                            
+                            return `
+                                <div class="timeline-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
+                                    <div class="timeline-marker"></div>
+                                    ${todo.dueDate ? `<div class="timeline-date">${dueDateStr}</div>` : ''}
+                                    <input type="checkbox" class="todo-checkbox"
+                                           ${todo.completed ? 'checked' : ''}
+                                           onchange="window.toggleTodo('${todo.id}'); window.toggleTodoSelection(this, '${todo.id}')">
+                                    <div class="todo-content">
+                                        <div class="todo-header">
+                                            <div class="todo-title">${todo.text}</div>
+                                            <div class="todo-meta">
+                                                <span class="todo-priority priority-${todo.priority}">${todo.priority}</span>
+                                                <span class="todo-category">${todo.category}</span>
+                                                ${todo.dueDate ? `<span class="todo-due"><i class="far fa-calendar"></i> ${dueDateStr}</span>` : ''}
+                                            </div>
+                                        </div>
+                                        ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                                    </div>
+                                    <div class="todo-actions">
+                                        <button class="detail-btn" onclick="window.toggleDescription('${todo.id}')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
+                                        <button class="edit-btn" onclick="window.showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="delete-btn" onclick="window.deleteTodo('${todo.id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
-                        </div>
-                        <div class="todo-actions">
-                            <button class="detail-btn" onclick="window.toggleDescription('${todo.id}')">
-                                <i class="fas fa-info-circle"></i>
-                            </button>
-                            <button class="edit-btn" onclick="window.showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                            <button class="delete-btn" onclick="window.deleteTodo('${todo.id}')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
+                            `;
+                        }).join('')}
                     </div>
                 `;
-            }).join('');
+            } else {
+                // Regular list or grid view
+                window.todoList.innerHTML = filteredTodos.map(todo => {
+                    const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
+                    const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
+                    const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
+
+                    return `
+                        <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
+                            <input type="checkbox" class="todo-checkbox"
+                                   ${todo.completed ? 'checked' : ''}
+                                   onchange="window.toggleTodo('${todo.id}'); window.toggleTodoSelection(this, '${todo.id}')">
+                            <div class="todo-content">
+                                <div class="todo-header">
+                                    <div class="todo-title">${todo.text}</div>
+                                    <div class="todo-meta">
+                                        <span class="todo-priority priority-${todo.priority}">${todo.priority}</span>
+                                        <span class="todo-category">${todo.category}</span>
+                                        ${todo.dueDate ? `<span class="todo-due"><i class="far fa-calendar"></i> ${dueDateStr}</span>` : ''}
+                                    </div>
+                                </div>
+                                ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
+                            </div>
+                            <div class="todo-actions">
+                                <button class="detail-btn" onclick="window.toggleDescription('${todo.id}')">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                                <button class="edit-btn" onclick="window.showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="delete-btn" onclick="window.deleteTodo('${todo.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
         }
 
         // Format date
@@ -1070,6 +1188,11 @@
             document.getElementById('completedCount').textContent = completedCount;
             document.getElementById('activeCount').textContent = activeCount;
             document.getElementById('overdueCount').textContent = overdueCount;
+            
+            // Update header stats as well
+            document.getElementById('headerTotalCount').textContent = totalCount;
+            document.getElementById('headerActiveCount').textContent = activeCount;
+            document.getElementById('headerCompletedCount').textContent = completedCount;
         }
 
         // Filter todos
@@ -1094,6 +1217,16 @@
             document.getElementById(`view${view.charAt(0).toUpperCase() + view.slice(1)}`).classList.add('active');
 
             renderTodos();
+        }
+
+        // Sort todos by due date for timeline view
+        function sortTodosByDate(todos) {
+            return todos.sort((a, b) => {
+                if (!a.dueDate && !b.dueDate) return 0;
+                if (!a.dueDate) return 1;
+                if (!b.dueDate) return -1;
+                return new Date(a.dueDate) - new Date(b.dueDate);
+            });
         }
 
         // Apply filters
@@ -1173,16 +1306,17 @@
         // Handle search input
         document.getElementById('searchInput').addEventListener('input', handleSearch);
 
-        // Handle Enter key in main input
-        document.getElementById('todoInput').addEventListener('keypress', (e) => {
+        // Handle quick add
+        function handleQuickAdd(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 const text = document.getElementById('todoInput').value.trim();
                 if (text) {
                     addTodo(text);
                     document.getElementById('todoInput').value = '';
                 }
             }
-        });
+        }
 
         // Close modal when clicking outside
         window.onclick = function(event) {
