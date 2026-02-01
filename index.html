@@ -316,10 +316,65 @@
             opacity: 0.8;
             background-color: var(--system-gray6);
             border-color: var(--system-gray4);
+            text-decoration: line-through;
         }
 
         .todo-item.overdue {
             border-left: 4px solid var(--danger);
+        }
+
+        /* Tiimo-style completion animation */
+        .todo-item.completing {
+            animation: completeAnimation 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes completeAnimation {
+            0% {
+                transform: scale(1);
+                border-color: var(--primary);
+            }
+            30% {
+                transform: scale(1.02);
+                opacity: 0.9;
+                border-color: var(--success);
+            }
+            70% {
+                transform: scale(0.98);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 0.8;
+                border-left: 4px solid var(--success);
+            }
+        }
+
+        /* Checkbox animation */
+        .todo-checkbox {
+            transition: all 0.3s ease;
+        }
+
+        .todo-checkbox:checked {
+            background-color: var(--success);
+            transform: scale(1.1);
+            box-shadow: 0 0 0 2px var(--success);
+        }
+
+        /* Ripple effect for completion */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(52, 199, 89, 0.4);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-animation {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
         }
 
         .todo-item:hover {
@@ -1554,20 +1609,73 @@
             }
         }
 
-        // Toggle todo completion (using data layer)
+        // Toggle todo completion with Tiimo-style animation (using data layer)
         async function toggleTodo(id) {
             const todo = window.todos.find(t => t.id === id);
             if (!todo) return;
 
             try {
-                await window.updateTodoData(id, {
-                    completed: !todo.completed,
-                    completedAt: !todo.completed ? firebase.firestore.FieldValue.serverTimestamp() : null
-                });
+                // Add completing animation class before updating
+                const todoElement = document.querySelector(`.todo-item[data-id="${id}"]`);
+                if (todoElement) {
+                    todoElement.classList.add('completing');
+                    
+                    // Add ripple effect
+                    addRippleEffect(todoElement, event);
+                }
+
+                // Add slight delay for animation to be visible
+                setTimeout(async () => {
+                    try {
+                        await window.updateTodoData(id, {
+                            completed: !todo.completed,
+                            completedAt: !todo.completed ? firebase.firestore.FieldValue.serverTimestamp() : null
+                        });
+                    } catch (error) {
+                        console.error('Error toggling todo:', error);
+                        alert('更新任务状态失败，请重试');
+                        
+                        // Remove animation class if update fails
+                        if (todoElement) {
+                            todoElement.classList.remove('completing');
+                        }
+                    }
+                }, 150);
             } catch (error) {
-                console.error('Error toggling todo:', error);
-                alert('更新任务状态失败，请重试');
+                console.error('Error in toggleTodo:', error);
             }
+        }
+
+        // Handle todo toggle with event for ripple effect
+        function handleTodoToggle(event, id) {
+            // Call toggleTodo with event for ripple effect
+            toggleTodo(id);
+        }
+
+        // Add ripple effect for visual feedback
+        function addRippleEffect(element, event) {
+            // Create ripple element
+            const ripple = document.createElement('span');
+            ripple.classList.add('ripple');
+            
+            // Position the ripple at the click location
+            const rect = element.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = (event?.clientX - rect.left) || (rect.width / 2);
+            const y = (event?.clientY - rect.top) || (rect.height / 2);
+            
+            ripple.style.width = ripple.style.height = `${size}px`;
+            ripple.style.left = `${x - (size / 2)}px`;
+            ripple.style.top = `${y - (size / 2)}px`;
+            
+            // Add ripple to the element
+            element.style.position = 'relative';
+            element.appendChild(ripple);
+            
+            // Remove ripple after animation completes
+            setTimeout(() => {
+                ripple.remove();
+            }, 600);
         }
 
         // Render todos based on current filters
@@ -1666,7 +1774,8 @@
                                     ${todo.dueDate ? `<div class="timeline-date">${dueDateStr}</div>` : ''}
                                     <input type="checkbox" class="todo-checkbox"
                                            ${todo.completed ? 'checked' : ''}
-                                           onchange="window.toggleTodo('${todo.id}'); window.toggleTodoSelection(this, '${todo.id}')">
+                                           onchange="window.toggleTodo('${todo.id}'); window.toggleTodoSelection(this, '${todo.id}')" 
+                                           onclick="window.handleTodoToggle(event, '${todo.id}')">
                                     <div class="todo-content">
                                         <div class="todo-header">
                                             <div class="todo-title">${todo.text}</div>
