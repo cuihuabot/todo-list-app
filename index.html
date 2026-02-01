@@ -853,30 +853,30 @@
 
         // Render todos based on current filters
         function renderTodos() {
-            if (!todoList) return;
+            if (!window.todoList) return;
             
-            let filteredTodos = [...todos];
+            let filteredTodos = [...window.todos];
             
             // Apply filters
             filteredTodos = filteredTodos.filter(todo => {
                 // Basic filter
-                if (currentFilter === 'active') return !todo.completed;
-                if (currentFilter === 'completed') return todo.completed;
+                if (window.currentFilter === 'active') return !todo.completed;
+                if (window.currentFilter === 'completed') return todo.completed;
                 return true;
             });
             
             // Priority filter
-            if (filters.priority) {
-                filteredTodos = filteredTodos.filter(todo => todo.priority === filters.priority);
+            if (window.filters.priority) {
+                filteredTodos = filteredTodos.filter(todo => todo.priority === window.filters.priority);
             }
             
             // Category filter
-            if (filters.category) {
-                filteredTodos = filteredTodos.filter(todo => todo.category === filters.category);
+            if (window.filters.category) {
+                filteredTodos = filteredTodos.filter(todo => todo.category === window.filters.category);
             }
             
             // Due date filter
-            if (filters.dueDate) {
+            if (window.filters.dueDate) {
                 filteredTodos = filteredTodos.filter(todo => {
                     if (!todo.dueDate) return false;
                     
@@ -884,7 +884,7 @@
                     const now = new Date();
                     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                     
-                    switch(filters.dueDate) {
+                    switch(window.filters.dueDate) {
                         case 'overdue':
                             return due < today && !todo.completed;
                         case 'today':
@@ -904,8 +904,8 @@
             }
             
             // Search filter
-            if (filters.search) {
-                const searchTerm = filters.search.toLowerCase();
+            if (window.filters.search) {
+                const searchTerm = window.filters.search.toLowerCase();
                 filteredTodos = filteredTodos.filter(todo => 
                     todo.text.toLowerCase().includes(searchTerm) ||
                     (todo.description && todo.description.toLowerCase().includes(searchTerm)) ||
@@ -915,19 +915,19 @@
             
             // Render todos
             if (filteredTodos.length === 0) {
-                todoList.innerHTML = `
+                window.todoList.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
-                        <p>🎉 ${currentFilter === 'all' ? '暂无待办事项' : 
-                              currentFilter === 'active' ? '暂无待办事项' : 
+                        <p>🎉 ${window.currentFilter === 'all' ? '暂无待办事项' : 
+                              window.currentFilter === 'active' ? '暂无待办事项' : 
                               '暂无已完成事项'}</p>
-                        <p>${currentFilter === 'all' ? '添加一些任务开始吧！' : ''}</p>
+                        <p>${window.currentFilter === 'all' ? '添加一些任务开始吧！' : ''}</p>
                     </div>
                 `;
                 return;
             }
             
-            todoList.innerHTML = filteredTodos.map(todo => {
+            window.todoList.innerHTML = filteredTodos.map(todo => {
                 const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
                 const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
                 const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
@@ -936,7 +936,7 @@
                     <div class="todo-item ${todo.completed ? 'completed' : ''} ${isOverdue ? 'overdue' : ''}" data-id="${todo.id}">
                         <input type="checkbox" class="todo-checkbox" 
                                ${todo.completed ? 'checked' : ''} 
-                               onchange="toggleTodo('${todo.id}')">
+                               onchange="window.toggleTodo('${todo.id}')">
                         <div class="todo-content">
                             <div class="todo-header">
                                 <div class="todo-title">${todo.text}</div>
@@ -952,10 +952,10 @@
                             <button class="detail-btn" onclick="toggleDescription('${todo.id}')">
                                 <i class="fas fa-info-circle"></i>
                             </button>
-                            <button class="edit-btn" onclick="showAddModal(${JSON.stringify(todo)})">
+                            <button class="edit-btn" onclick="showAddModal(${JSON.stringify(todo).replace(/"/g, '&quot;')})">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="delete-btn" onclick="deleteTodo('${todo.id}')">
+                            <button class="delete-btn" onclick="window.deleteTodo('${todo.id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -980,10 +980,10 @@
 
         // Update statistics
         function updateStats() {
-            const totalCount = todos.length;
-            const completedCount = todos.filter(todo => todo.completed).length;
+            const totalCount = window.todos.length;
+            const completedCount = window.todos.filter(todo => todo.completed).length;
             const activeCount = totalCount - completedCount;
-            const overdueCount = todos.filter(todo => {
+            const overdueCount = window.todos.filter(todo => {
                 return todo.dueDate && 
                        new Date(todo.dueDate) < new Date() && 
                        !todo.completed;
@@ -997,7 +997,7 @@
 
         // Filter todos
         function filterTodos(filter) {
-            currentFilter = filter;
+            window.currentFilter = filter;
             
             document.querySelectorAll('.filters button').forEach(btn => {
                 btn.classList.remove('active');
@@ -1009,7 +1009,7 @@
 
         // Change view
         function changeView(view) {
-            currentView = view;
+            window.currentView = view;
             
             document.querySelectorAll('.view-controls button').forEach(btn => {
                 btn.classList.remove('active');
@@ -1021,22 +1021,22 @@
 
         // Apply filters
         function applyFilters() {
-            filters.priority = document.getElementById('priorityFilter').value;
-            filters.category = document.getElementById('categoryFilter').value;
-            filters.dueDate = document.getElementById('dueDateFilter').value;
+            window.filters.priority = document.getElementById('priorityFilter').value;
+            window.filters.category = document.getElementById('categoryFilter').value;
+            window.filters.dueDate = document.getElementById('dueDateFilter').value;
             
             renderTodos();
         }
 
         // Handle search
         function handleSearch() {
-            filters.search = document.getElementById('searchInput').value.trim();
+            window.filters.search = document.getElementById('searchInput').value.trim();
             renderTodos();
         }
 
         // Show add/edit modal
         function showAddModal(todo = null) {
-            editingId = todo ? todo.id : null;
+            window.editingId = todo ? todo.id : null;
             
             if (todo) {
                 document.getElementById('modalTitle').textContent = '编辑任务';
