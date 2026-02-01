@@ -11,7 +11,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+try {
+    // Check if app is already initialized to avoid duplicate initialization error
+    app = firebase.app();
+    console.log("Firebase app already initialized");
+} catch {
+    app = firebase.initializeApp(firebaseConfig);
+    console.log("Firebase app initialized with config");
+}
+
 const db = firebase.firestore();
 const auth = firebase.auth();
 
