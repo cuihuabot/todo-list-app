@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - 修复验证</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px 0;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        input, select {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Todo App - 修复验证页面</h1>
+        
+        <div class="test-section">
+            <h3>JavaScript 错误检测</h3>
+            <div id="js-status" class="status">页面已加载，等待检查...</div>
+            <button onclick="checkVariables()">检查全局变量</button>
+            <button onclick="testFunctionCalls()">测试函数调用</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>变量状态</h3>
+            <pre id="variables-output">点击上面的按钮来检查变量状态</pre>
+        </div>
+        
+        <div class="test-section">
+            <h3>说明</h3>
+            <p>此页面用于验证修复后的Todo应用是否解决了以下问题：</p>
+            <ul>
+                <li>变量重复声明错误</li>
+                <li>currentUser未定义错误</li>
+                <li>函数作用域问题</li>
+                <li>全局变量引用问题</li>
+            </ul>
+            <p>如果下面的检查都显示成功，则修复已生效。</p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // 输出到页面的函数
+        function logToPage(message, isError = false) {
+            const statusDiv = document.getElementById('js-status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + (isError ? 'error' : 'success');
+        }
+
+        // 检查全局变量
+        function checkVariables() {
+            try {
+                const vars = {
+                    'window.todos': typeof window.todos !== 'undefined' ? '存在' : '不存在',
+                    'window.currentUser': typeof window.currentUser !== 'undefined' ? '存在' : '不存在',
+                    'window.currentFilter': typeof window.currentFilter !== 'undefined' ? '存在' : '不存在',
+                    'window.currentView': typeof window.currentView !== 'undefined' ? '存在' : '不存在',
+                    'window.editingId': typeof window.editingId !== 'undefined' ? '存在' : '不存在',
+                    'window.filters': typeof window.filters !== 'undefined' ? '存在' : '不存在',
+                    'window.authSection': typeof window.authSection !== 'undefined' ? '存在' : '不存在',
+                    'window.todoApp': typeof window.todoApp !== 'undefined' ? '存在' : '不存在',
+                    'window.userInfo': typeof window.userInfo !== 'undefined' ? '存在' : '不存在',
+                    'window.loginForm': typeof window.loginForm !== 'undefined' ? '存在' : '不存在',
+                    'window.registerForm': typeof window.registerForm !== 'undefined' ? '存在' : '不存在',
+                    'window.todoList': typeof window.todoList !== 'undefined' ? '存在' : '不存在',
+                    'window.loadingIndicator': typeof window.loadingIndicator !== 'undefined' ? '存在' : '不存在'
+                };
+
+                let output = "全局变量状态:\n";
+                for (const [key, value] of Object.entries(vars)) {
+                    output += `${key}: ${value}\n`;
+                }
+
+                document.getElementById('variables-output').textContent = output;
+
+                // 检查是否有任何关键变量缺失
+                const missingVars = Object.entries(vars).filter(([key, value]) => value === '不存在').map(([key]) => key);
+                if (missingVars.length === 0) {
+                    logToPage('✅ 所有关键全局变量都已正确定义', false);
+                } else {
+                    logToPage('❌ 缺少以下全局变量: ' + missingVars.join(', '), true);
+                }
+            } catch (error) {
+                logToPage('❌ 检查变量时出错: ' + error.message, true);
+            }
+        }
+
+        // 测试函数调用
+        function testFunctionCalls() {
+            try {
+                // 检查必要的函数是否存在
+                const functionsToTest = [
+                    'setupAuthHandlers',
+                    'loadUserTodos',
+                    'addTodo',
+                    'updateTodo',
+                    'deleteTodo',
+                    'toggleComplete',
+                    'renderTodos',
+                    'editTodo',
+                    'initializeUserTodos',
+                    'showApp',
+                    'logout'
+                ];
+
+                let output = "函数可用性测试:\n";
+                let allFunctionsExist = true;
+
+                for (const funcName of functionsToTest) {
+                    const exists = typeof window[funcName] !== 'undefined';
+                    output += `${funcName}: ${exists ? '存在' : '不存在'}\n`;
+                    if (!exists) allFunctionsExist = false;
+                }
+
+                document.getElementById('variables-output').textContent = output;
+
+                if (allFunctionsExist) {
+                    logToPage('✅ 所有关键函数都已正确定义', false);
+                } else {
+                    logToPage('❌ 存在未定义的关键函数', true);
+                }
+            } catch (error) {
+                logToPage('❌ 测试函数时出错: ' + error.message, true);
+            }
+        }
+
+        // 页面加载时的初步检查
+        window.onload = function() {
+            logToPage('✅ 页面已成功加载，没有JavaScript错误');
+        };
+
+        // 监听全局错误
+        window.onerror = function(message, source, lineno, colno, error) {
+            logToPage('❌ JavaScript错误: ' + message, true);
+            return true;
+        };
+    </script>
+</body>
+</html>
