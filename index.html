@@ -1624,15 +1624,15 @@
             }).length;
 
             // Only update the new multi-tab UI stats
-            document.getElementById('todoTabTotalCount').textContent = totalCount;
-            document.getElementById('todoTabCompletedCount').textContent = completedCount;
-            document.getElementById('todoTabActiveCount').textContent = activeCount;
-            document.getElementById('todoTabOverdueCount').textContent = overdueCount;
+            const totalEl = document.getElementById('todoTabTotalCount');
+            const completedEl = document.getElementById('todoTabCompletedCount');
+            const activeEl = document.getElementById('todoTabActiveCount');
+            const overdueEl = document.getElementById('todoTabOverdueCount');
             
-            // Update header stats as well
-            document.getElementById('headerTotalCount').textContent = totalCount;
-            document.getElementById('headerActiveCount').textContent = activeCount;
-            document.getElementById('headerCompletedCount').textContent = completedCount;
+            if (totalEl) totalEl.textContent = totalCount;
+            if (completedEl) completedEl.textContent = completedCount;
+            if (activeEl) activeEl.textContent = activeCount;
+            if (overdueEl) overdueEl.textContent = overdueCount;
         }
 
         // Filter todos
@@ -2070,8 +2070,19 @@
             // Show selected tab
             document.getElementById(tabName + '-tab').classList.add('active');
             
-            // Mark nav item as active
-            event.currentTarget.classList.add('active');
+            // Mark corresponding nav item as active
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach((item, index) => {
+                const spans = item.getElementsByTagName('span');
+                if (spans.length > 0) {
+                    const tabLabel = spans[0].textContent.trim();
+                    if ((tabName === 'todo' && tabLabel === '待办') ||
+                        (tabName === 'today' && tabLabel === '今天') ||
+                        (tabName === 'profile' && tabLabel === '我的')) {
+                        item.classList.add('active');
+                    }
+                }
+            });
             
             // If switching to profile tab, update profile info
             if (tabName === 'profile' && window.currentUser) {
