@@ -820,7 +820,7 @@
         }
 
         // Delete a todo
-        async function deleteTodo(id) {
+        async function deleteTodo(id, todoList) {
             if (!window.currentUser || !id) return;
             
             if (!confirm('确定要删除这个任务吗？')) return;
@@ -836,7 +836,7 @@
         }
 
         // Toggle todo completion
-        async function toggleTodo(id) {
+        async function toggleTodo(id, todoList) {
             const todo = window.todos.find(t => t.id === id);
             if (!todo) return;
             
@@ -1180,7 +1180,7 @@
         };
         window.deleteTodo = function(id) {
             if (confirm('确定要删除这个任务吗？')) {
-                window.deleteTodo(id, window.todoList);
+                window.deleteTodo(id);  // 修复：调用原始函数而不是递归调用
             }
         };
         window.toggleDescription = toggleDescription;
