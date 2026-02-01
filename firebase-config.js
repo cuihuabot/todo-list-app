@@ -1,13 +1,14 @@
 // Firebase configuration
 // Please replace with your own Firebase project configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "your-project.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "your-app-id"
-};
+    apiKey: "AIzaSyDAh1FFyjt2Y0LpHfCaXgBkTT4kXmdr3q4",
+    authDomain: "cuihua-todolist.firebaseapp.com",
+    projectId: "cuihua-todolist",
+    storageBucket: "cuihua-todolist.firebasestorage.app",
+    messagingSenderId: "231753597001",
+    appId: "1:231753597001:web:c033010dea87a1c342bf98",
+    measurementId: "G-9FLXFERRD1"
+  };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
