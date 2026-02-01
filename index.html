@@ -1205,94 +1205,6 @@
             </div>
         </div>
     </div>
-
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="搜索任务...">
-        </div>
-
-        <div class="controls">
-            <div class="input-group">
-                <input type="text" id="todoInput" placeholder="输入新的待办事项..." maxlength="100" onkeypress="handleQuickAdd(event)">
-                <button onclick="window.showAddModal()">
-                    <i class="fas fa-plus"></i> 详情
-                </button>
-            </div>
-            <div class="filters">
-                <button onclick="window.filterTodos('all')" id="filterAll" class="active">全部</button>
-                <button onclick="window.filterTodos('active')" id="filterActive">待办</button>
-                <button onclick="window.filterTodos('completed')" id="filterCompleted">已完成</button>
-            </div>
-            <div class="view-controls">
-                <button onclick="window.changeView('list')" id="viewList" class="active">列表</button>
-                <button onclick="window.changeView('grid')" id="viewGrid">网格</button>
-                <button onclick="window.changeView('timeline')" id="viewTimeline">时间轴</button>
-            </div>
-            <div class="bulk-actions">
-                <button onclick="window.selectAllTodos()" title="全选"><i class="fas fa-check-square"></i></button>
-                <button onclick="window.toggleSelectedCompletion()" title="切换完成状态"><i class="fas fa-sync-alt"></i></button>
-                <button onclick="window.deleteSelectedTodos()" title="删除选中"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>
-
-        <div class="advanced-filters">
-            <div class="filter-group">
-                <label for="priorityFilter">优先级</label>
-                <select id="priorityFilter" onchange="applyFilters()">
-                    <option value="">全部</option>
-                    <option value="high">高</option>
-                    <option value="medium">中</option>
-                    <option value="low">低</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="categoryFilter">分类</label>
-                <select id="categoryFilter" onchange="applyFilters()">
-                    <option value="">全部</option>
-                    <option value="work">工作</option>
-                    <option value="personal">个人</option>
-                    <option value="shopping">购物</option>
-                    <option value="health">健康</option>
-                    <option value="learning">学习</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="dueDateFilter">到期时间</label>
-                <select id="dueDateFilter" onchange="applyFilters()">
-                    <option value="">全部</option>
-                    <option value="overdue">已过期</option>
-                    <option value="today">今天</option>
-                    <option value="week">本周</option>
-                    <option value="month">本月</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="todo-list" id="todoList">
-            <div class="loading" id="loadingIndicator">
-                <i class="fas fa-spinner fa-spin"></i> 加载中...
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-item">
-                <div class="stat-number" id="totalCount">0</div>
-                <div>总计</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="activeCount">0</div>
-                <div>待办</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="completedCount">0</div>
-                <div>完成</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-number" id="overdueCount">0</div>
-                <div>逾期</div>
-            </div>
-        </div>
-    </div>
-
     <!-- Add/Edit Modal -->
     <div id="todoModal" class="modal">
         <div class="modal-content">
@@ -1411,8 +1323,10 @@
         window.registerForm = document.getElementById('registerForm');
         window.loginFormContainer = document.getElementById('loginFormContainer');
         window.registerFormContainer = document.getElementById('registerFormContainer');
-        window.todoList = document.getElementById('todoList');
-        window.loadingIndicator = document.getElementById('loadingIndicator');
+        // Note: Using the new todo tab's todo list container
+        window.todoList = document.getElementById('todoTabTodoList');
+        // Note: Using the new todo tab's loading indicator
+        window.loadingIndicator = document.getElementById('todoTabLoadingIndicator');
 
         // Form handlers
         // 初始化认证处理器，传入必要的DOM元素
@@ -1709,21 +1623,16 @@
                        !todo.completed;
             }).length;
 
-            document.getElementById('totalCount').textContent = totalCount;
-            document.getElementById('completedCount').textContent = completedCount;
-            document.getElementById('activeCount').textContent = activeCount;
-            document.getElementById('overdueCount').textContent = overdueCount;
+            // Only update the new multi-tab UI stats
+            document.getElementById('todoTabTotalCount').textContent = totalCount;
+            document.getElementById('todoTabCompletedCount').textContent = completedCount;
+            document.getElementById('todoTabActiveCount').textContent = activeCount;
+            document.getElementById('todoTabOverdueCount').textContent = overdueCount;
             
             // Update header stats as well
             document.getElementById('headerTotalCount').textContent = totalCount;
             document.getElementById('headerActiveCount').textContent = activeCount;
             document.getElementById('headerCompletedCount').textContent = completedCount;
-            
-            // Update todo tab stats as well
-            document.getElementById('todoTabTotalCount').textContent = totalCount;
-            document.getElementById('todoTabCompletedCount').textContent = completedCount;
-            document.getElementById('todoTabActiveCount').textContent = activeCount;
-            document.getElementById('todoTabOverdueCount').textContent = overdueCount;
         }
 
         // Filter todos
@@ -1771,7 +1680,7 @@
 
         // Handle search
         function handleSearch() {
-            window.filters.search = document.getElementById('searchInput').value.trim();
+            window.filters.search = document.getElementById('todoSearchInput').value.trim();
             renderTodos();
         }
 
@@ -1835,18 +1744,12 @@
         });
 
         // Handle search input
-        document.getElementById('searchInput').addEventListener('input', handleSearch);
+        document.getElementById('todoSearchInput').addEventListener('input', handleSearch);
 
-        // Handle quick add
+        // Handle quick add - removed as this is part of old UI that was deleted
         function handleQuickAdd(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const text = document.getElementById('todoInput').value.trim();
-                if (text) {
-                    addTodo(text);
-                    document.getElementById('todoInput').value = '';
-                }
-            }
+            // This function is not used in the new multi-tab UI
+            // Quick add functionality has been moved to the add modal
         }
 
         // Close modal when clicking outside
@@ -1889,8 +1792,8 @@
         }
 
         // Initialize search event listener
-        document.getElementById('searchInput').addEventListener('input', () => {
-            window.filters.search = document.getElementById('searchInput').value.trim();
+        document.getElementById('todoSearchInput').addEventListener('input', () => {
+            window.filters.search = document.getElementById('todoSearchInput').value.trim();
             renderTodos();
         });
 
