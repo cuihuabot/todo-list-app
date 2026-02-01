@@ -1090,6 +1090,12 @@
 
         // Logout function
         async function logout() {
+            if (!auth) {
+                console.error('Firebase auth not initialized');
+                alert('认证服务未初始化，请刷新页面重试');
+                return;
+            }
+            
             try {
                 await auth.signOut();
                 window.currentUser = null;

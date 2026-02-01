@@ -10,18 +10,28 @@ const firebaseConfig = {
     measurementId: "G-9FLXFERRD1"
 };
 
-// Initialize Firebase
+// Initialize Firebase with better error handling
+let app, auth, db;
+
 try {
     // Check if app is already initialized to avoid duplicate initialization error
     app = firebase.app();
     console.log("Firebase app already initialized");
-} catch {
+} catch (error) {
+    console.log("Initializing Firebase app...");
     app = firebase.initializeApp(firebaseConfig);
     console.log("Firebase app initialized with config");
 }
 
-const db = firebase.firestore();
-const auth = firebase.auth();
+// Initialize services after ensuring app is ready
+try {
+    auth = firebase.auth();
+    db = firebase.firestore();
+    console.log("Firebase services initialized successfully");
+} catch (error) {
+    console.error("Error initializing Firebase services:", error);
+    alert("Firebase服务初始化失败: " + error.message);
+}
 
 // Authentication functions
 function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userInfo, todoList) {
