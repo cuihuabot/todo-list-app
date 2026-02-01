@@ -1936,56 +1936,6 @@
 
         // Initialize search event listener - removed as search functionality is disabled
 
-        // Check for stored authentication state on page load
-        function checkStoredAuthState() {
-            // Check for stored user in cookie
-            const storedUser = getCookie('currentUser');
-            if (storedUser) {
-                try {
-                    const userObj = JSON.parse(storedUser);
-                    // If we have stored user info, check if Firebase has restored the session
-                    if (window.currentUser) {
-                        // User is already logged in via Firebase
-                        window.onUserLoggedIn();
-                    } else {
-                        // We have stored credentials but Firebase hasn't restored session yet
-                        // Wait a bit for Firebase to restore the session
-                        setTimeout(() => {
-                            if (!window.currentUser) {
-                                // If Firebase didn't restore session, clear stored credentials
-                                eraseCookie('currentUser');
-                            }
-                        }, 2000);
-                    }
-                } catch (e) {
-                    console.error("Error parsing stored user:", e);
-                    eraseCookie('currentUser');
-                }
-            }
-        }
-
-        // Cookie utility functions
-        function setCookie(name, value, days) {
-            const expires = new Date();
-            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
-            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-        }
-
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        function eraseCookie(name) {
-            document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-        }
-
         // Callbacks for data layer to notify UI layer
         window.onUserLoggedIn = async function() {
             await loadUserTodos();
@@ -1993,14 +1943,6 @@
                 window.authSection.style.display = 'none';
                 window.todoApp.style.display = 'block';
                 window.userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
-                
-                // Store user info in cookie for future visits
-                const userObj = {
-                    uid: window.currentUser.uid,
-                    email: window.currentUser.email,
-                    displayName: window.currentUser.displayName
-                };
-                setCookie('currentUser', JSON.stringify(userObj), 30); // Store for 30 days
             }
         };
 
@@ -2013,9 +1955,6 @@
             }
             if (window.loginForm) window.loginForm.reset();
             if (window.registerForm) window.registerForm.reset();
-            
-            // Clear stored user info from cookie
-            eraseCookie('currentUser');
         };
 
         window.onTodosChanged = async function() {
@@ -2253,9 +2192,6 @@
             initializeTheme();
             // Initialize default tab
             switchTab('todo');
-            
-            // Check stored auth state after page loads
-            checkStoredAuthState();
         });
 
         // Tab switching functionality

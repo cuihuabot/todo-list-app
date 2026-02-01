@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Persistence Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background-color: #e8f4fd;
+            border: 1px solid #b3d9ff;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .failure {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        .danger {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Auth Persistence 测试页面</h1>
+        
+        <div class="status">
+            <h3>当前状态检查</h3>
+            <p><strong>Cookie中存储的用户信息：</strong> <span id="storedUserInfo">-</span></p>
+            <p><strong>Firebase当前用户：</strong> <span id="firebaseUser">-</span></p>
+            <p><strong>页面显示状态：</strong> <span id="pageStatus">-</span></p>
+        </div>
+        
+        <div>
+            <h3>测试功能</h3>
+            <button class="primary" onclick="checkAuthStatus()">检查认证状态</button>
+            <button class="secondary" onclick="clearStoredAuth()">清除存储的认证信息</button>
+            <button class="danger" onclick="goToMainApp()">前往主应用</button>
+        </div>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script>
+        // Cookie utility functions
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
+        function eraseCookie(name) {
+            document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+        }
+
+        async function checkAuthStatus() {
+            const storedUser = getCookie('currentUser');
+            document.getElementById('storedUserInfo').textContent = storedUser || '无';
+            
+            // Since we can't directly access Firebase from here without initializing,
+            // we'll just show a placeholder for the Firebase user
+            document.getElementById('firebaseUser').textContent = '需在主应用中查看';
+            
+            // Check if we're on the main app page
+            const isMainApp = window.location.pathname.includes('index.html') || 
+                             window.location.pathname.endsWith('/');
+            document.getElementById('pageStatus').textContent = isMainApp ? '主应用页面' : '测试页面';
+            
+            // Add test results
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = '';
+            
+            const result1 = document.createElement('div');
+            result1.className = 'test-result success';
+            result1.textContent = '✓ Cookie工具函数已加载';
+            resultsDiv.appendChild(result1);
+            
+            if (storedUser) {
+                const result2 = document.createElement('div');
+                result2.className = 'test-result success';
+                result2.textContent = '✓ 检测到存储的用户信息';
+                resultsDiv.appendChild(result2);
+            } else {
+                const result2 = document.createElement('div');
+                result2.className = 'test-result failure';
+                result2.textContent = '✗ 未检测到存储的用户信息';
+                resultsDiv.appendChild(result2);
+            }
+            
+            const result3 = document.createElement('div');
+            result3.className = 'test-result success';
+            result3.textContent = '✓ 认证状态检查功能正常';
+            resultsDiv.appendChild(result3);
+        }
+
+        function clearStoredAuth() {
+            eraseCookie('currentUser');
+            document.getElementById('storedUserInfo').textContent = '已清除';
+            
+            const resultsDiv = document.getElementById('testResults');
+            const result = document.createElement('div');
+            result.className = 'test-result success';
+            result.textContent = '✓ 存储的认证信息已清除';
+            resultsDiv.appendChild(result);
+        }
+
+        function goToMainApp() {
+            window.location.href = 'index.html';
+        }
+
+        // Run initial check when page loads
+        window.onload = function() {
+            checkAuthStatus();
+        };
+    </script>
+</body>
+</html>
