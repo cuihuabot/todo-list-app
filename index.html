@@ -1950,9 +1950,6 @@
             }
         }
 
-        // Global variable to hold session manager
-        let sessionManager;
-
         // Callbacks for data layer to notify UI layer
         window.onUserLoggedIn = async function() {
             await loadUserTodos();
@@ -1969,14 +1966,14 @@
                 };
                 
                 // Initialize session manager if not already done
-                if (typeof window.SessionManager !== 'undefined' && !sessionManager) {
-                    sessionManager = new window.SessionManager();
+                if (typeof window.SessionManager !== 'undefined' && !window.sessionManager) {
+                    window.sessionManager = new window.SessionManager();
                 }
                 
                 // Store the session
-                if (sessionManager) {
+                if (window.sessionManager) {
                     try {
-                        await sessionManager.storeSession(userObj);
+                        await window.sessionManager.storeSession(userObj);
                         console.log("Session stored in IndexedDB successfully");
                     } catch (error) {
                         console.error("Error storing session in IndexedDB:", error);
@@ -1984,9 +1981,9 @@
                 }
                 
                 // Restore the last visited page
-                if (sessionManager) {
+                if (window.sessionManager) {
                     try {
-                        const pageState = await sessionManager.getPageState(window.currentUser.uid);
+                        const pageState = await window.sessionManager.getPageState(window.currentUser.uid);
                         if (pageState && pageState.currentPage) {
                             switchTab(pageState.currentPage);
                         } else {
@@ -2014,10 +2011,10 @@
             if (window.registerForm) window.registerForm.reset();
             
             // Clear session from IndexedDB
-            if (sessionManager && window.currentUser) {
-                sessionManager.clearSession(window.currentUser.uid)
+            if (window.sessionManager && window.currentUser) {
+                window.sessionManager.clearSession(window.currentUser.uid)
                     .catch(error => console.error("Error clearing session:", error));
-                sessionManager.clearPageState(window.currentUser.uid)
+                window.sessionManager.clearPageState(window.currentUser.uid)
                     .catch(error => console.error("Error clearing page state:", error));
             }
         };
@@ -2295,9 +2292,9 @@
             }
             
             // Store the current page state in IndexedDB
-            if (window.currentUser && sessionManager) {
+            if (window.currentUser && window.sessionManager) {
                 try {
-                    await sessionManager.storePageState(window.currentUser.uid, tabName);
+                    await window.sessionManager.storePageState(window.currentUser.uid, tabName);
                     console.log("Current page state stored:", tabName);
                 } catch (error) {
                     console.error("Error storing page state:", error);
