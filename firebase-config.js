@@ -1,3 +1,13 @@
+// Password encryption utilities
+async function hashPassword(password) {
+    // Create a salt (in a real app, you'd want to generate a random salt per password)
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 // Firebase configuration
 // Please replace with your own Firebase project configuration
 const firebaseConfig = {
@@ -40,6 +50,15 @@ function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userIn
       e.preventDefault();
       const email = loginForm.email.value;
       const password = loginForm.password.value;
+      
+      // Simple client-side validation
+      if (!email || !password) {
+        alert('请填写邮箱和密码');
+        return;
+      }
+      
+      // Clear password field after reading to prevent showing in URL
+      loginForm.password.value = '';
       
       try {
         console.log("开始登录..."); // Debug logging
@@ -86,6 +105,10 @@ function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userIn
         console.log("密码长度验证失败"); // Debug logging
         return;
       }
+      
+      // Clear password fields after reading to prevent showing in URL
+      registerForm.password.value = '';
+      registerForm.confirmPassword.value = '';
       
       try {
         console.log("开始创建用户..."); // Debug logging

@@ -2123,7 +2123,7 @@
                 
                 alert('密码修改成功！');
                 
-                // 清空密码字段
+                // 清空密码字段 for security
                 document.getElementById('currentPassword').value = '';
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmNewPassword').value = '';
@@ -2140,6 +2140,11 @@
                 }
                 
                 alert(errorMessage);
+            } finally {
+                // Always clear password fields for security
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
             }
         }
 
