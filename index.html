@@ -1140,18 +1140,6 @@
             }
         }
 
-        // Listen for auth state changes
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                window.currentUser = user;
-                showApp();
-                window.loadUserTodos(window.todoList);
-            } else {
-                if (window.authSection) window.authSection.style.display = 'block';
-                if (window.todoApp) window.todoApp.style.display = 'none';
-            }
-        });
-
         // Initialize search event listener
         document.getElementById('searchInput').addEventListener('input', () => {
             window.filters.search = document.getElementById('searchInput').value.trim();
