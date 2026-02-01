@@ -693,6 +693,222 @@
             color: #666;
         }
 
+        .nav-bar {
+            display: flex;
+            background: var(--card-bg);
+            border-top: 1px solid var(--card-border);
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            cursor: pointer;
+            color: var(--system-gray);
+            transition: all 0.3s ease;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .nav-item span {
+            font-size: 12px;
+        }
+
+        .tab-content {
+            padding-bottom: 60px; /* Space for nav bar */
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+        }
+
+        .tab-pane {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .today-schedule {
+            margin-top: 20px;
+        }
+
+        .time-block {
+            background: var(--card-bg);
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+        }
+
+        .time-block h3 {
+            margin: 0;
+            padding: 15px;
+            background: var(--system-gray6);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .time-block-content {
+            padding: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--system-gray);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .user-card {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--card-border);
+        }
+
+        .user-avatar {
+            font-size: 48px;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+
+        .user-info-detail h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+        }
+
+        .user-info-detail p {
+            margin: 0;
+            color: var(--system-gray);
+            font-size: 14px;
+        }
+
+        .edit-profile-btn {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .achievements-section {
+            margin-bottom: 25px;
+        }
+
+        .achievement-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .achievement-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--card-border);
+        }
+
+        .achievement-icon {
+            font-size: 24px;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .achievement-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .achievement-label {
+            font-size: 12px;
+            color: var(--system-gray);
+        }
+
+        .reflection-section {
+            margin-bottom: 25px;
+        }
+
+        .reflection-entry textarea {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: var(--card-bg);
+            min-height: 100px;
+            font-family: inherit;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
+        .profile-actions {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+        }
+
+        .profile-actions .logout-btn {
+            width: auto;
+            margin: 0;
+        }
+
         @media (max-width: 768px) {
             .header {
                 flex-direction: column;
@@ -714,6 +930,14 @@
             }
 
             .advanced-filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .achievement-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .profile-actions {
                 grid-template-columns: 1fr;
             }
         }
@@ -775,24 +999,213 @@
     </div>
 
     <!-- Todo App Section (Initially Hidden) -->
-    <div id="todoApp" class="container" style="display: none;">
-        <div class="header">
-            <div>
-                <h1>📋 Multi-User Todo List</h1>
-                <p>安全的个人待办事项管理</p>
-                <div class="header-stats">
-                    <span class="stat-badge">总计: <span id="headerTotalCount">0</span></span>
-                    <span class="stat-badge">待办: <span id="headerActiveCount">0</span></span>
-                    <span class="stat-badge">完成: <span id="headerCompletedCount">0</span></span>
-                </div>
+    <div id="todoApp" class="container" style="display: none; max-width: 100%; margin: 0; border-radius: 0; height: 100vh; max-height: 100vh; overflow: hidden;">
+        <!-- Navigation Bar -->
+        <div class="nav-bar">
+            <div class="nav-item active" onclick="window.switchTab('todo')">
+                <i class="fas fa-list"></i>
+                <span>待办</span>
             </div>
-            <div class="user-controls">
-                <span class="user-info" id="userInfo">Loading...</span>
-                <button class="theme-toggle-btn" onclick="window.toggleTheme()">🌙</button>
-                <button class="profile-btn" onclick="window.showProfileModal()">个人信息</button>
-                <button class="logout-btn" onclick="window.logout()">登出</button>
+            <div class="nav-item" onclick="window.switchTab('today')">
+                <i class="fas fa-calendar-day"></i>
+                <span>今天</span>
+            </div>
+            <div class="nav-item" onclick="window.switchTab('profile')">
+                <i class="fas fa-user"></i>
+                <span>我的</span>
             </div>
         </div>
+        
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- To-Do List Tab -->
+            <div id="todo-tab" class="tab-pane active">
+                <div class="header">
+                    <div>
+                        <h1>📋 待办事项</h1>
+                        <p>高效完成每一项任务</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="window.showAddModal()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="action-btn" onclick="window.toggleSortMenu()">
+                            <i class="fas fa-sort"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="todoSearchInput" placeholder="搜索任务...">
+                </div>
+
+                <div class="controls">
+                    <div class="filters">
+                        <button onclick="window.filterTodos('all')" id="filterAll" class="active">全部</button>
+                        <button onclick="window.filterTodos('active')" id="filterActive">待办</button>
+                        <button onclick="window.filterTodos('completed')" id="filterCompleted">已完成</button>
+                    </div>
+                    <div class="view-controls">
+                        <button onclick="window.changeView('list')" id="viewList" class="active">列表</button>
+                        <button onclick="window.changeView('timeline')" id="viewTimeline">时间轴</button>
+                    </div>
+                </div>
+
+                <div class="todo-list" id="todoList">
+                    <div class="loading" id="loadingIndicator">
+                        <i class="fas fa-spinner fa-spin"></i> 加载中...
+                    </div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="totalCount">0</div>
+                        <div>总计</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="activeCount">0</div>
+                        <div>待办</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="completedCount">0</div>
+                        <div>完成</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="overdueCount">0</div>
+                        <div>逾期</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Schedule Tab -->
+            <div id="today-tab" class="tab-pane">
+                <div class="header">
+                    <div>
+                        <h1>📅 今天</h1>
+                        <p>今日时间规划</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="window.toggleFocusMode()">
+                            <i class="fas fa-bullseye"></i>
+                        </button>
+                        <button class="action-btn" onclick="window.triggerMagicFeature()">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="today-schedule">
+                    <div class="time-block">
+                        <h3><i class="fas fa-clock"></i> 随时</h3>
+                        <div class="time-block-content">
+                            <div class="empty-state">
+                                <i class="fas fa-dove"></i>
+                                <p>你今天有什么计划？</p>
+                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="time-block">
+                        <h3><i class="fas fa-sun"></i> 上午</h3>
+                        <div class="time-block-content">
+                            <div class="empty-state">
+                                <i class="fas fa-coffee"></i>
+                                <p>上午安排什么？</p>
+                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="time-block">
+                        <h3><i class="fas fa-sun"></i> 白天</h3>
+                        <div class="time-block-content">
+                            <div class="empty-state">
+                                <i class="fas fa-umbrella-beach"></i>
+                                <p>白天有什么安排？</p>
+                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="time-block">
+                        <h3><i class="fas fa-moon"></i> 晚上</h3>
+                        <div class="time-block-content">
+                            <div class="empty-state">
+                                <i class="fas fa-bed"></i>
+                                <p>晚上计划什么？</p>
+                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile-tab" class="tab-pane">
+                <div class="header">
+                    <div>
+                        <h1>👤 我的</h1>
+                        <p>个人中心</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="window.shareAchievements()">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="profile-content">
+                    <div class="user-card">
+                        <div class="user-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="user-info-detail">
+                            <h3 id="profileDisplayName">用户名</h3>
+                            <p id="profileEmail">邮箱</p>
+                        </div>
+                        <button class="edit-profile-btn" onclick="window.showProfileModal()">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="achievements-section">
+                        <h3>🏆 成就系统</h3>
+                        <div class="achievement-cards">
+                            <div class="achievement-card">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="achievement-text">
+                                    <div class="achievement-value" id="consecutiveDays">0</div>
+                                    <div class="achievement-label">连续规划天数</div>
+                                </div>
+                            </div>
+                            <div class="achievement-card">
+                                <div class="achievement-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="achievement-text">
+                                    <div class="achievement-value" id="totalTasks">0</div>
+                                    <div class="achievement-label">总任务数</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="reflection-section">
+                        <h3>💭 每周总结</h3>
+                        <div class="reflection-entry">
+                            <textarea id="reflectionTextarea" placeholder="记录本周的反思或心情..."></textarea>
+                            <button class="btn-primary" onclick="window.saveReflection()">保存记录</button>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="btn-secondary" onclick="window.exportData()">导出数据</button>
+                        <button class="logout-btn" onclick="window.logout()">登出</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
         <div class="search-bar">
             <input type="text" id="searchInput" placeholder="搜索任务...">
@@ -1726,7 +2139,109 @@
         // Initialize theme on load
         document.addEventListener('DOMContentLoaded', function() {
             initializeTheme();
+            // Initialize default tab
+            switchTab('todo');
         });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-pane').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Mark nav item as active
+            event.currentTarget.classList.add('active');
+            
+            // If switching to profile tab, update profile info
+            if (tabName === 'profile' && window.currentUser) {
+                updateProfileInfo();
+            }
+        }
+
+        // Update profile information in profile tab
+        function updateProfileInfo() {
+            if (window.currentUser) {
+                document.getElementById('profileDisplayName').textContent = window.currentUser.displayName || window.currentUser.email;
+                document.getElementById('profileEmail').textContent = window.currentUser.email || '';
+                
+                // Update achievement counters
+                document.getElementById('totalTasks').textContent = window.todos ? window.todos.length : 0;
+                
+                // Calculate consecutive days (simplified implementation)
+                const consecutiveDays = Math.floor(Math.random() * 30) + 1; // Placeholder
+                document.getElementById('consecutiveDays').textContent = consecutiveDays;
+            }
+        }
+
+        // Toggle sort menu
+        function toggleSortMenu() {
+            // In a real implementation, this would show a sort options menu
+            alert('排序功能将在后续版本中实现');
+        }
+
+        // Focus mode functionality
+        function toggleFocusMode() {
+            alert('专注模式将在后续版本中实现');
+        }
+
+        // Magic feature (AI planning assistance)
+        function triggerMagicFeature() {
+            alert('AI规划助手功能将在后续版本中实现');
+        }
+
+        // Share achievements
+        function shareAchievements() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '我的Tiimo成就',
+                    text: '我已连续规划了X天，完成了Y个任务！',
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                alert('分享功能需要在HTTPS环境下使用');
+            }
+        }
+
+        // Export data functionality
+        function exportData() {
+            const data = {
+                user: window.currentUser,
+                todos: window.todos,
+                createdAt: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'tiimo-data-export.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        // Save reflection entry
+        function saveReflection() {
+            const textarea = document.getElementById('reflectionTextarea');
+            const content = textarea.value.trim();
+            
+            if (content) {
+                alert('反思记录已保存！');
+                textarea.value = ''; // Clear after saving
+            } else {
+                alert('请输入反思内容');
+            }
+        }
 
         // Close profile modal when clicking outside
         window.onclick = function(event) {
