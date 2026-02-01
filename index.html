@@ -500,6 +500,9 @@
             font-size: 28px;
             font-weight: bold;
             cursor: pointer;
+            position: absolute;
+            right: 10px;
+            top: 10px;
         }
 
         .close:hover {
@@ -973,6 +976,93 @@
             
             .profile-actions {
                 grid-template-columns: 1fr;
+            }
+            
+            /* Mobile-friendly modal styles */
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 15px;
+                max-height: 85vh;
+            }
+            
+            .modal-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .close {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+            }
+            
+            .form-group label {
+                font-size: 14px;
+            }
+            
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                font-size: 16px; /* Better touch target for mobile */
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .form-actions button {
+                width: 100%;
+            }
+        }
+        
+        /* Additional mobile optimizations for very small screens */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                margin: 10px auto;
+            }
+            
+            .modal-content {
+                width: 98%;
+                margin: 5% auto;
+                padding: 12px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .search-bar input,
+            .form-group input,
+            .form-group textarea,
+            .form-group select {
+                padding: 12px;
+            }
+            
+            .todo-item {
+                padding: 12px 15px;
+            }
+            
+            .nav-bar {
+                padding: 5px 0;
+            }
+            
+            .nav-item {
+                padding: 8px 0;
+            }
+            
+            .nav-item i {
+                font-size: 18px;
+            }
+            
+            .nav-item span {
+                font-size: 10px;
             }
         }
     </style>
