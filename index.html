@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <title>Multi-User Todo List with Firebase</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -1063,6 +1063,18 @@
             
             .nav-item span {
                 font-size: 10px;
+            }
+        }
+        
+        /* Mobile input focus adjustments */
+        @media (max-width: 768px) {
+            body.input-focused {
+                height: 100%;
+                overflow: visible;
+            }
+            
+            .input-focused .modal-content {
+                max-height: 90vh;
             }
         }
     </style>
@@ -2328,6 +2340,49 @@
             } else {
                 alert('请输入反思内容');
             }
+        }
+
+        // Function to detect mobile devices
+        function isMobileDevice() {
+            return window.innerWidth <= 768 || 
+                   (navigator.userAgent.match(/Android/i) ||
+                    navigator.userAgent.match(/webOS/i) ||
+                    navigator.userAgent.match(/iPhone/i) ||
+                    navigator.userAgent.match(/iPad/i) ||
+                    navigator.userAgent.match(/iPod/i) ||
+                    navigator.userAgent.match(/BlackBerry/i) ||
+                    navigator.userAgent.match(/Windows Phone/i));
+        }
+
+        // Optimize layout for mobile when focusing on inputs
+        function setupMobileInputOptimization() {
+            if (!isMobileDevice()) return;
+
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    // Add a class to adjust layout when input is focused
+                    document.body.classList.add('input-focused');
+                    
+                    // For modals, scroll to the input field
+                    const modal = this.closest('.modal-content');
+                    if (modal) {
+                        setTimeout(() => {
+                            this.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        }, 300);
+                    }
+                });
+
+                input.addEventListener('blur', function() {
+                    // Remove class when input loses focus
+                    document.body.classList.remove('input-focused');
+                });
+            });
+        }
+
+        // Run mobile optimization when page loads
+        if (isMobileDevice()) {
+            setupMobileInputOptimization();
         }
 
         // Close profile modal when clicking outside
