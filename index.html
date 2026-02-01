@@ -998,7 +998,6 @@
         </div>
     </div>
 
-    <!-- Todo App Section (Initially Hidden) -->
     <div id="todoApp" class="container" style="display: none; max-width: 100%; margin: 0; border-radius: 0; height: 100vh; max-height: 100vh; overflow: hidden;">
         <!-- Navigation Bar -->
         <div class="nav-bar">
@@ -1026,10 +1025,10 @@
                         <p>高效完成每一项任务</p>
                     </div>
                     <div class="header-actions">
-                        <button class="action-btn" onclick="window.showAddModal()">
+                        <button type="button" class="action-btn" onclick="window.showAddModal()">
                             <i class="fas fa-plus"></i>
                         </button>
-                        <button class="action-btn" onclick="window.toggleSortMenu()">
+                        <button type="button" class="action-btn" onclick="window.toggleSortMenu()">
                             <i class="fas fa-sort"></i>
                         </button>
                     </div>
@@ -1041,37 +1040,37 @@
 
                 <div class="controls">
                     <div class="filters">
-                        <button onclick="window.filterTodos('all')" id="filterAll" class="active">全部</button>
-                        <button onclick="window.filterTodos('active')" id="filterActive">待办</button>
-                        <button onclick="window.filterTodos('completed')" id="filterCompleted">已完成</button>
+                        <button type="button" onclick="window.filterTodos('all')" id="todoFilterAll" class="active">全部</button>
+                        <button type="button" onclick="window.filterTodos('active')" id="todoFilterActive">待办</button>
+                        <button type="button" onclick="window.filterTodos('completed')" id="todoFilterCompleted">已完成</button>
                     </div>
                     <div class="view-controls">
-                        <button onclick="window.changeView('list')" id="viewList" class="active">列表</button>
-                        <button onclick="window.changeView('timeline')" id="viewTimeline">时间轴</button>
+                        <button type="button" onclick="window.changeView('list')" id="todoViewList" class="active">列表</button>
+                        <button type="button" onclick="window.changeView('timeline')" id="todoViewTimeline">时间轴</button>
                     </div>
                 </div>
 
-                <div class="todo-list" id="todoList">
-                    <div class="loading" id="loadingIndicator">
+                <div class="todo-list" id="todoTabTodoList">
+                    <div class="loading" id="todoTabLoadingIndicator">
                         <i class="fas fa-spinner fa-spin"></i> 加载中...
                     </div>
                 </div>
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-number" id="totalCount">0</div>
+                        <div class="stat-number" id="todoTabTotalCount">0</div>
                         <div>总计</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="activeCount">0</div>
+                        <div class="stat-number" id="todoTabActiveCount">0</div>
                         <div>待办</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="completedCount">0</div>
+                        <div class="stat-number" id="todoTabCompletedCount">0</div>
                         <div>完成</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-number" id="overdueCount">0</div>
+                        <div class="stat-number" id="todoTabOverdueCount">0</div>
                         <div>逾期</div>
                     </div>
                 </div>
@@ -1085,10 +1084,10 @@
                         <p>今日时间规划</p>
                     </div>
                     <div class="header-actions">
-                        <button class="action-btn" onclick="window.toggleFocusMode()">
+                        <button type="button" class="action-btn" onclick="window.toggleFocusMode()">
                             <i class="fas fa-bullseye"></i>
                         </button>
-                        <button class="action-btn" onclick="window.triggerMagicFeature()">
+                        <button type="button" class="action-btn" onclick="window.triggerMagicFeature()">
                             <i class="fas fa-magic"></i>
                         </button>
                     </div>
@@ -1101,7 +1100,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-dove"></i>
                                 <p>你今天有什么计划？</p>
-                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                                <button type="button" class="btn-primary" onclick="window.showAddModal()">添加任务</button>
                             </div>
                         </div>
                     </div>
@@ -1111,7 +1110,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-coffee"></i>
                                 <p>上午安排什么？</p>
-                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                                <button type="button" class="btn-primary" onclick="window.showAddModal()">添加任务</button>
                             </div>
                         </div>
                     </div>
@@ -1121,7 +1120,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-umbrella-beach"></i>
                                 <p>白天有什么安排？</p>
-                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                                <button type="button" class="btn-primary" onclick="window.showAddModal()">添加任务</button>
                             </div>
                         </div>
                     </div>
@@ -1131,7 +1130,7 @@
                             <div class="empty-state">
                                 <i class="fas fa-bed"></i>
                                 <p>晚上计划什么？</p>
-                                <button class="btn-primary" onclick="window.showAddModal()">添加任务</button>
+                                <button type="button" class="btn-primary" onclick="window.showAddModal()">添加任务</button>
                             </div>
                         </div>
                     </div>
@@ -1146,7 +1145,7 @@
                         <p>个人中心</p>
                     </div>
                     <div class="header-actions">
-                        <button class="action-btn" onclick="window.shareAchievements()">
+                        <button type="button" class="action-btn" onclick="window.shareAchievements()">
                             <i class="fas fa-share-alt"></i>
                         </button>
                     </div>
@@ -1158,10 +1157,10 @@
                             <i class="fas fa-user-circle"></i>
                         </div>
                         <div class="user-info-detail">
-                            <h3 id="profileDisplayName">用户名</h3>
-                            <p id="profileEmail">邮箱</p>
+                            <h3 id="profileTabDisplayName">用户名</h3>
+                            <p id="profileTabEmail">邮箱</p>
                         </div>
-                        <button class="edit-profile-btn" onclick="window.showProfileModal()">
+                        <button type="button" class="edit-profile-btn" onclick="window.showProfileModal()">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -1174,7 +1173,7 @@
                                     <i class="fas fa-calendar-check"></i>
                                 </div>
                                 <div class="achievement-text">
-                                    <div class="achievement-value" id="consecutiveDays">0</div>
+                                    <div class="achievement-value" id="profileTabConsecutiveDays">0</div>
                                     <div class="achievement-label">连续规划天数</div>
                                 </div>
                             </div>
@@ -1183,7 +1182,7 @@
                                     <i class="fas fa-tasks"></i>
                                 </div>
                                 <div class="achievement-text">
-                                    <div class="achievement-value" id="totalTasks">0</div>
+                                    <div class="achievement-value" id="profileTabTotalTasks">0</div>
                                     <div class="achievement-label">总任务数</div>
                                 </div>
                             </div>
@@ -1193,14 +1192,14 @@
                     <div class="reflection-section">
                         <h3>💭 每周总结</h3>
                         <div class="reflection-entry">
-                            <textarea id="reflectionTextarea" placeholder="记录本周的反思或心情..."></textarea>
-                            <button class="btn-primary" onclick="window.saveReflection()">保存记录</button>
+                            <textarea id="profileTabReflectionTextarea" placeholder="记录本周的反思或心情..."></textarea>
+                            <button type="button" class="btn-primary" onclick="window.saveReflection()">保存记录</button>
                         </div>
                     </div>
                     
                     <div class="profile-actions">
-                        <button class="btn-secondary" onclick="window.exportData()">导出数据</button>
-                        <button class="logout-btn" onclick="window.logout()">登出</button>
+                        <button type="button" class="btn-secondary" onclick="window.exportData()">导出数据</button>
+                        <button type="button" class="logout-btn" onclick="window.logout()">登出</button>
                     </div>
                 </div>
             </div>
@@ -1451,13 +1450,15 @@
                 renderTodos();
                 updateStats();
 
-                if (window.loadingIndicator) {
-                    window.loadingIndicator.style.display = 'none';
+                const loadingIndicator = document.getElementById('todoTabLoadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error loading todos:', error);
-                if (window.loadingIndicator) {
-                    window.loadingIndicator.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+                const loadingIndicator = document.getElementById('todoTabLoadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.innerHTML = '<p>加载失败，请刷新页面重试</p>';
                 }
             }
         }
@@ -1521,7 +1522,9 @@
 
         // Render todos based on current filters
         function renderTodos() {
-            if (!window.todoList) return;
+            // Use the todo tab's todo list container
+            const todoListContainer = document.getElementById('todoTabTodoList');
+            if (!todoListContainer) return;
 
             let filteredTodos = [...window.todos];
 
@@ -1583,7 +1586,7 @@
 
             // Render todos based on current view
             if (filteredTodos.length === 0) {
-                window.todoList.innerHTML = `
+                todoListContainer.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 10px;"></i>
                         <p>🎉 ${window.currentFilter === 'all' ? '暂无待办事项' :
@@ -1600,7 +1603,7 @@
                 // Sort by due date for timeline view
                 const sortedTodos = sortTodosByDate([...filteredTodos]);
                 
-                window.todoList.innerHTML = `
+                todoListContainer.innerHTML = `
                     <div class="timeline-container">
                         <div class="timeline-line"></div>
                         ${sortedTodos.map(todo => {
@@ -1643,7 +1646,7 @@
                 `;
             } else {
                 // Regular list or grid view
-                window.todoList.innerHTML = filteredTodos.map(todo => {
+                todoListContainer.innerHTML = filteredTodos.map(todo => {
                     const isOverdue = todo.dueDate && new Date(todo.dueDate) < new Date() && !todo.completed;
                     const dueDateStr = todo.dueDate ? formatDate(todo.dueDate) : '';
                     const createdAtStr = todo.createdAt ? formatDate(todo.createdAt.toDate ? todo.createdAt.toDate() : todo.createdAt) : '';
@@ -1715,6 +1718,12 @@
             document.getElementById('headerTotalCount').textContent = totalCount;
             document.getElementById('headerActiveCount').textContent = activeCount;
             document.getElementById('headerCompletedCount').textContent = completedCount;
+            
+            // Update todo tab stats as well
+            document.getElementById('todoTabTotalCount').textContent = totalCount;
+            document.getElementById('todoTabCompletedCount').textContent = completedCount;
+            document.getElementById('todoTabActiveCount').textContent = activeCount;
+            document.getElementById('todoTabOverdueCount').textContent = overdueCount;
         }
 
         // Filter todos
@@ -2170,15 +2179,15 @@
         // Update profile information in profile tab
         function updateProfileInfo() {
             if (window.currentUser) {
-                document.getElementById('profileDisplayName').textContent = window.currentUser.displayName || window.currentUser.email;
-                document.getElementById('profileEmail').textContent = window.currentUser.email || '';
+                document.getElementById('profileTabDisplayName').textContent = window.currentUser.displayName || window.currentUser.email;
+                document.getElementById('profileTabEmail').textContent = window.currentUser.email || '';
                 
                 // Update achievement counters
-                document.getElementById('totalTasks').textContent = window.todos ? window.todos.length : 0;
+                document.getElementById('profileTabTotalTasks').textContent = window.todos ? window.todos.length : 0;
                 
                 // Calculate consecutive days (simplified implementation)
                 const consecutiveDays = Math.floor(Math.random() * 30) + 1; // Placeholder
-                document.getElementById('consecutiveDays').textContent = consecutiveDays;
+                document.getElementById('profileTabConsecutiveDays').textContent = consecutiveDays;
             }
         }
 
@@ -2232,7 +2241,7 @@
 
         // Save reflection entry
         function saveReflection() {
-            const textarea = document.getElementById('reflectionTextarea');
+            const textarea = document.getElementById('profileTabReflectionTextarea');
             const content = textarea.value.trim();
             
             if (content) {
@@ -2258,4 +2267,4 @@
         };
     </script>
 </body>
-</html>
+</html></body>
