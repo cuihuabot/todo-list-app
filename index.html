@@ -689,13 +689,13 @@
     <script src="firebase-config.js"></script>
 
     <script>
-        // State management
-        let todos = [];
-        let currentFilter = 'all';
-        let currentView = 'list';
-        let editingId = null;
-        let currentUser = null;
-        let filters = {
+        // State management - 将currentUser设为全局以便在外部JS文件中访问
+        window.todos = [];
+        window.currentFilter = 'all';
+        window.currentView = 'list';
+        window.editingId = null;
+        window.currentUser = null;  // 设为全局变量，以便firebase-config.js中访问
+        window.filters = {
             priority: '',
             category: '',
             dueDate: '',
@@ -1237,6 +1237,17 @@
         window.showAddModal = showAddModal;
         window.closeModal = closeModal;
         window.logout = logout;
+        
+        // 确保这些函数在全局范围内可用
+        function showRegisterForm() {
+            document.getElementById('loginFormContainer').style.display = 'none';
+            document.getElementById('registerFormContainer').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('registerFormContainer').style.display = 'none';
+            document.getElementById('loginFormContainer').style.display = 'block';
+        }
     </script>
 </body>
 </html>

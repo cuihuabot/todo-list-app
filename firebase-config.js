@@ -24,8 +24,6 @@ const userList = document.getElementById('userList');
 const todoList = document.getElementById('todoList');
 const userInfo = document.getElementById('userInfo');
 
-let currentUser = null;
-
 // Authentication functions
 function setupAuthHandlers() {
   if (loginForm) {
