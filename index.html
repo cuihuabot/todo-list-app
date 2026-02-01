@@ -744,45 +744,45 @@
         // Initialize user todos collection
         async function initializeUserTodos() {
             // Create a default document for the user if it doesn't exist
-            const userRef = db.collection('users').doc(currentUser.uid);
+            const userRef = db.collection('users').doc(window.currentUser.uid);
             await userRef.set({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                displayName: currentUser.displayName || currentUser.email,
+                uid: window.currentUser.uid,
+                email: window.currentUser.email,
+                displayName: window.currentUser.displayName || window.currentUser.email,
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             }, { merge: true });
         }
 
         // Load user's todos from Firestore
         async function loadUserTodos() {
-            if (!currentUser) return;
+            if (!window.currentUser) return;
             
             try {
-                const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+                const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
                 const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
                 
-                todos = [];
+                window.todos = [];
                 snapshot.forEach(doc => {
-                    todos.push({ id: doc.id, ...doc.data() });
+                    window.todos.push({ id: doc.id, ...doc.data() });
                 });
                 
                 renderTodos();
                 updateStats();
                 
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
+                if (window.loadingIndicator) {
+                    window.loadingIndicator.style.display = 'none';
                 }
             } catch (error) {
                 console.error('Error loading todos:', error);
-                if (loadingIndicator) {
-                    loadingIndicator.innerHTML = '<p>加载失败，请刷新页面重试</p>';
+                if (window.loadingIndicator) {
+                    window.loadingIndicator.innerHTML = '<p>加载失败，请刷新页面重试</p>';
                 }
             }
         }
 
         // Add a new todo
         async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
-            if (!currentUser || !text.trim()) return;
+            if (!window.currentUser || !text.trim()) return;
             
             const newTodo = {
                 text: text.trim(),
@@ -796,7 +796,7 @@
             };
             
             try {
-                const todosRef = db.collection('users').doc(currentUser.uid).collection('todos');
+                const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
                 await todosRef.add(newTodo);
                 await loadUserTodos(); // Reload to get updated list with proper timestamps
             } catch (error) {
@@ -807,10 +807,10 @@
 
         // Update a todo
         async function updateTodo(id, updates) {
-            if (!currentUser || !id) return;
+            if (!window.currentUser || !id) return;
             
             try {
-                const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+                const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
                 await todoRef.update(updates);
                 await loadUserTodos();
             } catch (error) {
@@ -821,12 +821,12 @@
 
         // Delete a todo
         async function deleteTodo(id) {
-            if (!currentUser || !id) return;
+            if (!window.currentUser || !id) return;
             
             if (!confirm('确定要删除这个任务吗？')) return;
             
             try {
-                const todoRef = db.collection('users').doc(currentUser.uid).collection('todos').doc(id);
+                const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
                 await todoRef.delete();
                 await loadUserTodos();
             } catch (error) {
@@ -837,7 +837,7 @@
 
         // Toggle todo completion
         async function toggleTodo(id) {
-            const todo = todos.find(t => t.id === id);
+            const todo = window.todos.find(t => t.id === id);
             if (!todo) return;
             
             try {
@@ -1061,7 +1061,7 @@
         // Close modal
         function closeModal() {
             document.getElementById('todoModal').style.display = 'none';
-            editingId = null;
+            window.editingId = null;
         }
 
         // Handle form submission for add/edit
