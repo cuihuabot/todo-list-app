@@ -720,13 +720,28 @@
                 const email = document.getElementById('loginEmail').value;
                 const password = document.getElementById('loginPassword').value;
                 
+                console.log("登录表单提交:", { email }); // Debug logging
+                
+                if (!email || !password) {
+                    alert('请填写邮箱和密码');
+                    console.log("登录字段验证失败"); // Debug logging
+                    return;
+                }
+                
                 try {
+                    console.log("开始登录..."); // Debug logging
                     const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                    console.log("登录成功:", userCredential.user); // Debug logging
+                    
                     currentUser = userCredential.user;
                     await loadUserTodos();
+                    console.log("用户待办事项加载成功"); // Debug logging
+                    
                     showApp();
+                    console.log("应用界面切换成功"); // Debug logging
                 } catch (error) {
-                    alert(error.message);
+                    console.error("登录过程中发生错误:", error); // Debug logging
+                    alert(`登录失败: ${error.message}\n错误代码: ${error.code}`);
                 }
             });
         }
@@ -739,24 +754,43 @@
                 const password = document.getElementById('registerPassword').value;
                 const confirmPassword = document.getElementById('registerConfirmPassword').value;
                 
+                console.log("注册表单提交:", { displayName, email }); // Debug logging
+                
+                if (!displayName || !email || !password || !confirmPassword) {
+                    alert('请填写所有必填字段');
+                    console.log("字段验证失败"); // Debug logging
+                    return;
+                }
+                
                 if (password !== confirmPassword) {
                     alert('密码和确认密码不匹配');
+                    console.log("密码验证失败"); // Debug logging
                     return;
                 }
                 
                 if (password.length < 6) {
                     alert('密码长度至少为6位');
+                    console.log("密码长度验证失败"); // Debug logging
                     return;
                 }
                 
                 try {
+                    console.log("开始创建用户..."); // Debug logging
                     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    console.log("用户创建成功:", userCredential.user); // Debug logging
+                    
                     await userCredential.user.updateProfile({ displayName });
+                    console.log("用户资料显示名称更新成功"); // Debug logging
+                    
                     currentUser = userCredential.user;
                     await initializeUserTodos();
+                    console.log("用户待办事项初始化成功"); // Debug logging
+                    
                     showApp();
+                    console.log("应用界面切换成功"); // Debug logging
                 } catch (error) {
-                    alert(error.message);
+                    console.error("注册过程中发生错误:", error); // Debug logging
+                    alert(`注册失败: ${error.message}\n错误代码: ${error.code}`);
                 }
             });
         }
