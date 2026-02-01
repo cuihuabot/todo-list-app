@@ -908,6 +908,40 @@
             width: auto;
             margin: 0;
         }
+        
+        .logout-confirm-modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .logout-confirm-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logout-warning {
+            color: #e53e3e;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .logout-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
 
         @media (max-width: 768px) {
             .header {
@@ -1199,7 +1233,7 @@
                     
                     <div class="profile-actions">
                         <button type="button" class="btn-secondary" onclick="window.exportData()">导出数据</button>
-                        <button type="button" class="logout-btn" onclick="window.logout()">登出</button>
+                        <button type="button" class="logout-btn" style="background: #e53e3e;" onclick="window.logout()">登出</button>
                     </div>
                 </div>
             </div>
@@ -1767,8 +1801,42 @@
             if (window.userInfo) window.userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
         }
 
-        // Logout function
-        async function logout() {
+        // Logout confirmation function
+        function showLogoutConfirmation() {
+            // Create confirmation modal if it doesn't exist
+            let modal = document.getElementById('logoutConfirmModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'logoutConfirmModal';
+                modal.className = 'logout-confirm-modal';
+                modal.innerHTML = `
+                    <div class="logout-confirm-content">
+                        <div class="logout-warning">⚠️</div>
+                        <h3>确认退出登录</h3>
+                        <p>您确定要退出当前账户吗？</p>
+                        <div class="logout-buttons">
+                            <button type="button" class="btn-secondary" onclick="hideLogoutConfirmation()">取消</button>
+                            <button type="button" class="btn-primary" onclick="performLogout()">确认退出</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            modal.style.display = 'block';
+        }
+        
+        // Hide logout confirmation
+        function hideLogoutConfirmation() {
+            const modal = document.getElementById('logoutConfirmModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+        
+        // Perform actual logout
+        async function performLogout() {
+            hideLogoutConfirmation();
+            
             if (!auth) {
                 console.error('Firebase auth not initialized');
                 alert('认证服务未初始化，请刷新页面重试');
@@ -1788,7 +1856,13 @@
                 if (window.registerForm) window.registerForm.reset();
             } catch (error) {
                 console.error('Error signing out:', error);
+                alert('退出登录时发生错误，请重试');
             }
+        }
+        
+        // Logout function (now shows confirmation)
+        function logout() {
+            showLogoutConfirmation();
         }
 
         // Initialize search event listener
