@@ -738,30 +738,13 @@
             loginFormContainer.style.display = 'block';
         }
 
-        // Initialize user todos collection
-        async function initializeUserTodos() {
-            // Create a default document for the user if it doesn't exist
-            const userRef = db.collection('users').doc(window.currentUser.uid);
-            await userRef.set({
-                uid: window.currentUser.uid,
-                email: window.currentUser.email,
-                displayName: window.currentUser.displayName || window.currentUser.email,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-        }
-
-        // Load user's todos from Firestore
+        // Load user's todos from Firestore (using data layer)
         async function loadUserTodos() {
             if (!window.currentUser) return;
             
             try {
-                const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
-                const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
-                
-                window.todos = [];
-                snapshot.forEach(doc => {
-                    window.todos.push({ id: doc.id, ...doc.data() });
-                });
+                // Use the data layer function
+                window.todos = await window.loadUserTodosData();
                 
                 renderTodos();
                 updateStats();
@@ -777,68 +760,54 @@
             }
         }
 
-        // Add a new todo
+        // Add a new todo (using data layer)
         async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
             if (!window.currentUser || !text.trim()) return;
             
-            const newTodo = {
-                text: text.trim(),
-                description,
-                completed: false,
-                priority,
-                category,
-                dueDate,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                completedAt: null
-            };
-            
             try {
-                const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
-                await todosRef.add(newTodo);
-                await loadUserTodos(); // Reload to get updated list with proper timestamps
+                await window.addTodoData(text, description, priority, category, dueDate);
+                // The data layer will trigger refresh via callback
             } catch (error) {
                 console.error('Error adding todo:', error);
                 alert('添加任务失败，请重试');
             }
         }
 
-        // Update a todo
+        // Update a todo (using data layer)
         async function updateTodo(id, updates) {
             if (!window.currentUser || !id) return;
             
             try {
-                const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
-                await todoRef.update(updates);
-                await loadUserTodos();
+                await window.updateTodoData(id, updates);
+                // The data layer will trigger refresh via callback
             } catch (error) {
                 console.error('Error updating todo:', error);
                 alert('更新任务失败，请重试');
             }
         }
 
-        // Delete a todo
-        async function deleteTodo(id, todoList) {
+        // Delete a todo (using data layer)
+        async function deleteTodo(id) {
             if (!window.currentUser || !id) return;
             
             if (!confirm('确定要删除这个任务吗？')) return;
             
             try {
-                const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
-                await todoRef.delete();
-                await loadUserTodos();
+                await window.deleteTodoData(id);
+                // The data layer will trigger refresh via callback
             } catch (error) {
                 console.error('Error deleting todo:', error);
                 alert('删除任务失败，请重试');
             }
         }
 
-        // Toggle todo completion
-        async function toggleTodo(id, todoList) {
+        // Toggle todo completion (using data layer)
+        async function toggleTodo(id) {
             const todo = window.todos.find(t => t.id === id);
             if (!todo) return;
             
             try {
-                await updateTodo(id, { 
+                await window.updateTodoData(id, { 
                     completed: !todo.completed,
                     completedAt: !todo.completed ? firebase.firestore.FieldValue.serverTimestamp() : null
                 });
@@ -1140,8 +1109,33 @@
         // Initialize search event listener
         document.getElementById('searchInput').addEventListener('input', () => {
             window.filters.search = document.getElementById('searchInput').value.trim();
-            window.renderTodos(window.todos, window.todoList);
+            renderTodos();
         });
+
+        // Callbacks for data layer to notify UI layer
+        window.onUserLoggedIn = async function() {
+            await loadUserTodos();
+            if (window.authSection && window.todoApp && window.userInfo && window.currentUser) {
+                window.authSection.style.display = 'none';
+                window.todoApp.style.display = 'block';
+                window.userInfo.textContent = `欢迎, ${window.currentUser.displayName || window.currentUser.email}`;
+            }
+        };
+
+        window.onUserLoggedOut = function() {
+            window.todos = [];
+            renderTodos();
+            if (window.authSection && window.todoApp) {
+                window.authSection.style.display = 'block';
+                window.todoApp.style.display = 'none';
+            }
+            if (window.loginForm) window.loginForm.reset();
+            if (window.registerForm) window.registerForm.reset();
+        };
+
+        window.onTodosChanged = async function() {
+            await loadUserTodos();
+        };
 
         // Expose functions to global scope for inline handlers
         // 仅覆盖需要特殊处理的函数

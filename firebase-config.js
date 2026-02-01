@@ -8,15 +8,12 @@ const firebaseConfig = {
     messagingSenderId: "231753597001",
     appId: "1:231753597001:web:c033010dea87a1c342bf98",
     measurementId: "G-9FLXFERRD1"
-  };
+};
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
-
-// 在外部JS文件中，我们不直接获取DOM元素
-// 而是在主HTML文件中获取后传递给这里定义的函数
 
 // Authentication functions
 function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userInfo, todoList) {
@@ -32,7 +29,10 @@ function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userIn
         console.log("登录成功:", userCredential.user); // Debug logging
         
         window.currentUser = userCredential.user;
-        await loadUserTodos(todoList);
+        // 通知UI层加载数据
+        if (typeof window.onUserLoggedIn === 'function') {
+          window.onUserLoggedIn();
+        }
         showApp(todoApp, authSection, userInfo);
       } catch (error) {
         console.error("登录过程中发生错误:", error); // Debug logging
@@ -81,6 +81,10 @@ function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userIn
         await initializeUserTodos();
         console.log("用户待办事项初始化成功"); // Debug logging
         
+        // 通知UI层加载数据
+        if (typeof window.onUserLoggedIn === 'function') {
+          window.onUserLoggedIn();
+        }
         showApp(todoApp, authSection, userInfo);
         console.log("应用界面切换成功"); // Debug logging
       } catch (error) {
@@ -91,26 +95,37 @@ function setupAuthHandlers(loginForm, registerForm, todoApp, authSection, userIn
   }
 }
 
-// Todo functions
-async function loadUserTodos(todoList) {
-  if (!window.currentUser) return;
+// Data manipulation functions (only handle data, don't manipulate UI directly)
+async function loadUserTodosData() {
+  if (!window.currentUser) {
+    console.warn("loadUserTodosData: currentUser is undefined");
+    return [];
+  }
   
-  const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
-  const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
-  
-  window.todos = [];
-  snapshot.forEach(doc => {
-    window.todos.push({ id: doc.id, ...doc.data() });
-  });
-  
-  renderTodos(window.todos, todoList);
+  try {
+    const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
+    const snapshot = await todosRef.orderBy('createdAt', 'desc').get();
+    
+    const todos = [];
+    snapshot.forEach(doc => {
+      todos.push({ id: doc.id, ...doc.data() });
+    });
+    
+    return todos;
+  } catch (error) {
+    console.error('Error loading todos:', error);
+    throw error;
+  }
 }
 
-async function addTodo(text, description = '', priority = 'medium', category = 'personal', dueDate = '', todoList) {
-  if (!window.currentUser) return;
+async function addTodoData(text, description = '', priority = 'medium', category = 'personal', dueDate = '') {
+  if (!window.currentUser || !text.trim()) {
+    console.warn("addTodoData: currentUser is undefined or text is empty");
+    return;
+  }
   
   const newTodo = {
-    text,
+    text: text.trim(),
     description,
     completed: false,
     priority,
@@ -120,84 +135,75 @@ async function addTodo(text, description = '', priority = 'medium', category = '
     completedAt: null
   };
   
-  const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
-  await todosRef.add(newTodo);
-  await loadUserTodos(todoList);
+  try {
+    const todosRef = db.collection('users').doc(window.currentUser.uid).collection('todos');
+    await todosRef.add(newTodo);
+    // 通知UI层刷新
+    if (typeof window.onTodosChanged === 'function') {
+      window.onTodosChanged();
+    }
+  } catch (error) {
+    console.error('Error adding todo:', error);
+    throw error;
+  }
 }
 
-async function updateTodo(id, updates, todoList) {
-  if (!window.currentUser) return;
-  
-  const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
-  await todoRef.update(updates);
-  await loadUserTodos(todoList);
-}
-
-async function deleteTodo(id, todoList) {
-  if (!window.currentUser) return;
-  
-  const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
-  await todoRef.delete();
-  await loadUserTodos(todoList);
-}
-
-function renderTodos(todos, todoList) {
-  if (!todoList) return;
-  
-  todoList.innerHTML = '';
-  
-  if (todos.length === 0) {
-    todoList.innerHTML = '<p>暂无待办事项，添加一个开始吧！</p>';
+async function updateTodoData(id, updates) {
+  if (!window.currentUser || !id) {
+    console.warn("updateTodoData: currentUser is undefined or id is missing");
     return;
   }
   
-  todos.forEach(todo => {
-    const todoElement = document.createElement('div');
-    todoElement.className = 'todo-item';
-    todoElement.innerHTML = `
-      <div class="todo-header">
-        <input type="checkbox" ${todo.completed ? 'checked' : ''} onchange="window.toggleComplete('${todo.id}', ${!todo.completed}, window.todoList)">
-        <span class="todo-text ${todo.completed ? 'completed' : ''}">${todo.text}</span>
-        <div class="todo-actions">
-          <button onclick="window.editTodo('${todo.id}', '${todo.text}', '${todo.description}', '${todo.priority}', '${todo.category}', '${todo.dueDate}', window.todoList)">编辑</button>
-          <button onclick="window.deleteTodo('${todo.id}', window.todoList)">删除</button>
-        </div>
-      </div>
-      ${todo.description ? `<div class="todo-description">${todo.description}</div>` : ''}
-      <div class="todo-meta">
-        <span class="todo-priority priority-${todo.priority}">${todo.priority}</span>
-        <span class="todo-category">${todo.category}</span>
-        ${todo.dueDate ? `<span class="todo-due">到期: ${todo.dueDate}</span>` : ''}
-      </div>
-    `;
-    todoList.appendChild(todoElement);
-  });
+  try {
+    const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
+    await todoRef.update(updates);
+    // 通知UI层刷新
+    if (typeof window.onTodosChanged === 'function') {
+      window.onTodosChanged();
+    }
+  } catch (error) {
+    console.error('Error updating todo:', error);
+    throw error;
+  }
 }
 
-async function toggleComplete(id, completed, todoList) {
-  await updateTodo(id, { 
-    completed, 
-    completedAt: completed ? firebase.firestore.FieldValue.serverTimestamp() : null 
-  }, todoList);
-}
-
-function editTodo(id, text, description, priority, category, dueDate, todoList) {
-  // Implementation for editing a todo
-  const newText = prompt('编辑任务:', text);
-  if (newText !== null) {
-    updateTodo(id, { text: newText, description, priority, category, dueDate }, todoList);
+async function deleteTodoData(id) {
+  if (!window.currentUser || !id) {
+    console.warn("deleteTodoData: currentUser is undefined or id is missing");
+    return;
+  }
+  
+  try {
+    const todoRef = db.collection('users').doc(window.currentUser.uid).collection('todos').doc(id);
+    await todoRef.delete();
+    // 通知UI层刷新
+    if (typeof window.onTodosChanged === 'function') {
+      window.onTodosChanged();
+    }
+  } catch (error) {
+    console.error('Error deleting todo:', error);
+    throw error;
   }
 }
 
 async function initializeUserTodos() {
-  // Create a default collection for the user if it doesn't exist
-  const userRef = db.collection('users').doc(window.currentUser.uid);
-  await userRef.set({
-    uid: window.currentUser.uid,
-    email: window.currentUser.email,
-    displayName: window.currentUser.displayName || window.currentUser.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-  });
+  if (!window.currentUser) {
+    console.warn("initializeUserTodos: currentUser is undefined");
+    return;
+  }
+  
+  try {
+    const userRef = db.collection('users').doc(window.currentUser.uid);
+    await userRef.set({
+      uid: window.currentUser.uid,
+      email: window.currentUser.email,
+      displayName: window.currentUser.displayName || window.currentUser.email,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error initializing user:', error);
+    throw error;
+  }
 }
 
 function showApp(todoApp, authSection, userInfo) {
@@ -216,24 +222,26 @@ function logout(todoApp, authSection) {
 auth.onAuthStateChanged(user => {
   if (user) {
     window.currentUser = user;
-    loadUserTodos(window.todoList);
-    showApp(window.todoApp, window.authSection, window.userInfo);
+    // 通知UI层用户已登录
+    if (typeof window.onUserLoggedIn === 'function') {
+      window.onUserLoggedIn();
+    }
+    // 注意：这里不调用showApp，因为UI层会处理显示逻辑
   } else {
-    if (window.authSection) window.authSection.style.display = 'block';
-    if (window.todoApp) window.todoApp.style.display = 'none';
+    // 退出登录，重置UI
+    window.currentUser = null;
+    if (typeof window.onUserLoggedOut === 'function') {
+      window.onUserLoggedOut();
+    }
   }
 });
 
-// Expose functions to global scope for inline handlers
-// These functions will be called from the main HTML file
+// Expose functions to global scope for use by UI layer
 window.setupAuthHandlers = setupAuthHandlers;
-window.loadUserTodos = loadUserTodos;
-window.addTodo = addTodo;
-window.updateTodo = updateTodo;
-window.deleteTodo = deleteTodo;
-window.toggleComplete = toggleComplete;
-window.renderTodos = renderTodos;
-window.editTodo = editTodo;
+window.loadUserTodosData = loadUserTodosData;
+window.addTodoData = addTodoData;
+window.updateTodoData = updateTodoData;
+window.deleteTodoData = deleteTodoData;
 window.initializeUserTodos = initializeUserTodos;
 window.showApp = showApp;
 window.logout = logout;
