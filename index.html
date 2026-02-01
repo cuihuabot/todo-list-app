@@ -1224,6 +1224,17 @@
             renderTodos();
         });
 
+        // 确保这些函数在全局范围内可用
+        function showRegisterForm() {
+            document.getElementById('loginFormContainer').style.display = 'none';
+            document.getElementById('registerFormContainer').style.display = 'block';
+        }
+
+        function showLoginForm() {
+            document.getElementById('registerFormContainer').style.display = 'none';
+            document.getElementById('loginFormContainer').style.display = 'block';
+        }
+
         // Expose functions to global scope for inline handlers
         window.showRegisterForm = showRegisterForm;
         window.showLoginForm = showLoginForm;
@@ -1237,17 +1248,6 @@
         window.showAddModal = showAddModal;
         window.closeModal = closeModal;
         window.logout = logout;
-        
-        // 确保这些函数在全局范围内可用
-        function showRegisterForm() {
-            document.getElementById('loginFormContainer').style.display = 'none';
-            document.getElementById('registerFormContainer').style.display = 'block';
-        }
-
-        function showLoginForm() {
-            document.getElementById('registerFormContainer').style.display = 'none';
-            document.getElementById('loginFormContainer').style.display = 'block';
-        }
     </script>
 </body>
 </html>
